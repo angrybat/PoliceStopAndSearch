@@ -1,4 +1,15 @@
-from sqlmodel import DECIMAL, Column, Field, Relationship, SQLModel
+from sqlmodel import (
+    BOOLEAN,
+    DATETIME,
+    DECIMAL,
+    INTEGER,
+    Column,
+    Field,
+    ForeignKey,
+    Relationship,
+    SQLModel,
+    String,
+)
 
 from src.models.bronze.force import Force
 
@@ -8,38 +19,44 @@ class StopAndSearch(SQLModel, table=True):
     __table_args__ = {"schema": "bronze"}
 
     id: int | None = Field(sa_column=Column(
-        "Id", primary_key=True, nullable=False))
-    force_id: int = Field("ForceId", sa_column=Column(
-        nullable=False, foreign_key="bronze.Force.Id"))
-    type: str = Field("Type", sa_column=Column(nullable=False, unique=True))
+        "Id", primary_key=True, nullable=False, type_=INTEGER))
+    force_id: int = Field(sa_column=Column(
+        "ForceId", ForeignKey("bronze.Force.Id"), nullable=False, type_=INTEGER))
+    type: str = Field(sa_column=Column(
+        "Type", nullable=False, unique=True, type_=String))
     involved_person: bool = Field(
-        "InvolvedPerson", sa_column=Column(nullable=False))
-    datetime: str = Field("Datetime", sa_column=Column(nullable=False))
-    operation: bool | None = Field(
-        "Operation", sa_column=Column(nullable=True))
+        sa_column=Column("InvolvedPerson", nullable=False, type_=BOOLEAN))
+    datetime: str = Field(sa_column=Column(
+        "Datetime", nullable=False, type_=DATETIME))
+    operation: bool | None = Field(sa_column=Column(
+        "Operation", nullable=True, type_=BOOLEAN))
     operation_name: str | None = Field(
-        "OperationName", sa_column=Column(nullable=True))
-    latitude: float | None = Field(
-        "Latitude", sa_column=Column(nullable=True, type_=DECIMAL(9, 6)))
-    longitude: float | None = Field(
-        "Longitude", sa_column=Column(nullable=True, type_=DECIMAL(9, 6)))
-    street_id: int | None = Field(
-        "StreetId", sa_column=Column(nullable=True))
-    street_name: str | None = Field(
-        "StreetName", sa_column=Column(nullable=True))
-    gender: str | None = Field("Gender", sa_column=Column(nullable=True))
-    age_range: str = Field("AgeRange", sa_column=Column(nullable=False))
+        sa_column=Column("OperationName", nullable=True, type_=String))
+    latitude: float | None = Field(sa_column=Column(
+        "Latitude", nullable=True, type_=DECIMAL(9, 6)))
+    longitude: float | None = Field(sa_column=Column(
+        "Longitude", nullable=True, type_=DECIMAL(9, 6)))
+    street_id: int | None = Field(sa_column=Column(
+        "StreetId", nullable=True, type_=INTEGER))
+    street_name: str | None = Field(sa_column=Column(
+        "StreetName", nullable=True, type_=String))
+    gender: str | None = Field(sa_column=Column(
+        "Gender", nullable=True, type_=String))
+    age_range: str = Field(sa_column=Column(
+        "AgeRange", nullable=False, type_=String))
     self_defined_ethnicity: str = Field(
-        "SelfDefinedEthnicity", sa_column=Column(nullable=False))
+        sa_column=Column("SelfDefinedEthnicity", nullable=False, type_=String))
     officer_defined_ethnicity: str = Field(
-        "OfficerDefinedEthnicity", sa_column=Column(nullable=False))
-    legislation: str = Field("Legislation", sa_column=Column(nullable=False))
+        sa_column=Column("OfficerDefinedEthnicity", nullable=False, type_=String))
+    legislation: str = Field(sa_column=Column(
+        "Legislation", nullable=False, type_=String))
     object_of_search: str = Field(
-        "ObjectOfSearch", sa_column=Column(nullable=False))
-    outcome: str = Field("Outcome", sa_column=Column(nullable=False))
+        sa_column=Column("ObjectOfSearch", nullable=False, type_=String))
+    outcome: str = Field(sa_column=Column(
+        "Outcome", nullable=False, type_=String))
     outcome_linked_to_object_of_search: bool | None = Field(
-        "OutcomeLinkedToObjectOfSearch", sa_column=Column(nullable=True))
+        sa_column=Column("OutcomeLinkedToObjectOfSearch", nullable=True, type_=BOOLEAN))
     removal_of_more_than_outer_clothing: bool | None = Field(
-        "RemovalOfMoreThanOuterClothing", sa_column=Column(nullable=True))
+        sa_column=Column("RemovalOfMoreThanOuterClothing", nullable=True, type_=BOOLEAN))
 
     force: Force = Relationship(back_populates="stop_and_searches")

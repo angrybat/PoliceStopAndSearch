@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from sqlmodel import Column, Field, Relationship, SQLModel, String
+from sqlmodel import INTEGER, Column, Field, Relationship, SQLModel, String
 
 from src.models.bronze.available_date_force_mapping import AvailableDateForceMapping
 
@@ -13,7 +13,7 @@ class AvailableDate(SQLModel, table=True):
     __table_args__ = {"schema": "bronze"}
 
     id: int | None = Field(sa_column=Column(
-        "Id", nullable=False, primary_key=True))
+        "Id", nullable=False, primary_key=True, type_=INTEGER))
     year_month: str = Field(sa_column=Column(
         "YearMonth", type_=String(7), nullable=False, unique=True))
 
