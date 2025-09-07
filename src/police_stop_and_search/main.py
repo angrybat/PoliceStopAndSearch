@@ -93,9 +93,7 @@ class PoliceStopAndSearch:
         This uses a cache volume to prevent re-installing packages on each call."""
         development_pip_cache = dag.cache_volume("development_pip_cache")
         container = await self.production_dependencies(source, tag)
-        container = container.with_mounted_cache(
-            PIP_CACHE_PATH, development_pip_cache
-        )
+        container = container.with_mounted_cache(PIP_CACHE_PATH, development_pip_cache)
         return self.install_requirements(
             container, source, "requirements/development.txt"
         )
