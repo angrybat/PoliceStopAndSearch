@@ -15,7 +15,9 @@ class PoliceClient(AsyncClient):
         super().__init__(base_url=base_url)
 
     async def get_forces(self) -> list[Force]:
-        forces = await self._get_response_body("forces")
+        forces = await self._get_response_body(
+            "forces", "Failed to fetch forces from Police API"
+        )
         try:
             return [get_force(force) for force in forces]
         except KeyError as error:
@@ -24,7 +26,7 @@ class PoliceClient(AsyncClient):
 
     async def get_available_dates(self) -> list[AvailableDate]:
         available_dates = await self._get_response_body(
-            "crimes-street-dates", "available dates"
+            "crimes-street-dates", "Failed to fetch available dates from Police API"
         )
         try:
             return [get_available_date(date) for date in available_dates]
@@ -40,30 +42,36 @@ class PoliceClient(AsyncClient):
             if with_location
             else f"stops-no-location?force={force_id}&date={date}"
         )
-        object_type = (
-            "stop and searches with location"
+        error_message = (
+            f"Failed to fetch stop and searches with "
+            f"location from Police API for force with id '{force_id}' on date '{date}'"
             if with_location
-            else "stop and searches without location"
+            else f"Failed to fetch stop and searches without "
+            f"location from Police API for force with id '{force_id}' on date '{date}'"
         )
-        stop_and_searches = await self._get_response_body(endpoint, object_type)
-        return [
-            get_stop_and_search(stop_and_search)
-            for stop_and_search in stop_and_searches
-        ]
+        stop_and_searches = await self._get_response_body(endpoint, error_message)
+        try:
+            return [
+                get_stop_and_search(stop_and_search)
+                for stop_and_search in stop_and_searches
+            ]
+        except KeyError as error:
+            error_message = (
+                f"Failed to map stop and searches with location"
+                f" from Police API for force with id '{force_id}' on date '{date}'"
+                if with_location
+                else f"Failed to map stop and searches without location"
+                f" from Police API for force with id '{force_id}' on date '{date}'"
+            )
+            logging.exception(error_message)
+            raise error
 
-    async def _get_response_body(
-        self, endpoint: str, type: str | None = None
-    ) -> list[dict]:
+    async def _get_response_body(self, endpoint: str, error_message: str) -> list[dict]:
         response = await self.get(endpoint)
         try:
             response.raise_for_status()
         except HTTPStatusError as error:
-            message = (
-                f"Failed to fetch {type} from Police API"
-                if type
-                else f"Failed to fetch {endpoint} from Police API"
-            )
-            logging.exception(message)
+            logging.exception(error_message)
             raise error
         return response.json()
 
@@ -88,8 +96,8 @@ def get_stop_and_search(
     return StopAndSearch(
         force_id=None,
         id=None,
-        type=stop_and_search.get("type"),
-        involved_person=stop_and_search.get("involved_person"),
+        type=stop_and_search["type"],
+        involved_person=stop_and_search["involved_person"],
         datetime=stop_and_search.get("datetime"),
         operation=stop_and_search.get("operation", None),
         operation_name=stop_and_search.get("operation_name", None),
@@ -98,11 +106,11 @@ def get_stop_and_search(
         street_id=street_id,
         street_name=street_name,
         gender=stop_and_search.get("gender", None),
-        age_range=stop_and_search.get("age_range"),
-        self_defined_ethnicity=stop_and_search.get("self_defined_ethnicity"),
-        officer_defined_ethnicity=stop_and_search.get("officer_defined_ethnicity"),
-        legislation=stop_and_search.get("legislation"),
-        object_of_search=stop_and_search.get("object_of_search"),
+        age_range=stop_and_search["age_range"],
+        self_defined_ethnicity=stop_and_search["self_defined_ethnicity"],
+        officer_defined_ethnicity=stop_and_search["officer_defined_ethnicity"],
+        legislation=stop_and_search["legislation"],
+        object_of_search=stop_and_search["object_of_search"],
         outcome_name=outcome_name,
         outcome_id=outcome_id,
         outcome_linked_to_object_of_search=stop_and_search.get(
