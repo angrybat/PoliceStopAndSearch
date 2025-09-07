@@ -27,9 +27,14 @@ class PoliceClient(AsyncClient):
         available_dates = await self._get_response_body(
             "crimes-street-dates", "available dates"
         )
-        return [
-            AvailableDate(id=None, year_month=date["date"]) for date in available_dates
-        ]
+        try:
+            return [
+                AvailableDate(id=None, year_month=date["date"])
+                for date in available_dates
+            ]
+        except KeyError as error:
+            logging.exception("Failed to map available dates returned from Police API")
+            raise error
 
     async def _get_response_body(
         self, endpoint: str, type: str | None = None
