@@ -4,8 +4,19 @@ import pytest
 from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 
-from src.ingest.police_client import PoliceClient
+from src.ingest.police_client import BASE_URL, PoliceClient
 from src.models.bronze.force import Force
+
+
+class TestInit:
+    def test_initializes_with_default_base_url(self):
+        police_client = PoliceClient()
+        assert police_client.base_url == BASE_URL
+
+    def test_initializes_with_custom_base_url(self):
+        custom_url = "https://custom.police.api/"
+        police_client = PoliceClient(base_url=custom_url)
+        assert police_client.base_url == custom_url
 
 
 class TestGetForces:
