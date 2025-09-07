@@ -14,9 +14,14 @@ class PoliceClient(AsyncClient):
 
     async def get_forces(self) -> list[Force]:
         forces = await self._get_response_body("forces")
-        return [
-            Force(id=None, name=force["name"], api_id=force["id"]) for force in forces
-        ]
+        try:
+            return [
+                Force(id=None, name=force["name"], api_id=force["id"])
+                for force in forces
+            ]
+        except KeyError as error:
+            logging.exception("Failed to map forces returned from Police API")
+            raise error
 
     async def get_available_dates(self) -> list[AvailableDate]:
         available_dates = await self._get_response_body(
