@@ -1,0 +1,222 @@
+[
+    {
+        "id": null,
+        "api_id": "avon-and-somerset",
+        "name": "Avon and Somerset Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "bedfordshire",
+        "name": "Bedfordshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "cambridgeshire",
+        "name": "Cambridgeshire Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "cheshire",
+        "name": "Cheshire Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "city-of-london",
+        "name": "City of London Police"
+    },
+    {
+        "id": null,
+        "api_id": "cleveland",
+        "name": "Cleveland Police"
+    },
+    {
+        "id": null,
+        "api_id": "cumbria",
+        "name": "Cumbria Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "derbyshire",
+        "name": "Derbyshire Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "devon-and-cornwall",
+        "name": "Devon & Cornwall Police"
+    },
+    {
+        "id": null,
+        "api_id": "dorset",
+        "name": "Dorset Police"
+    },
+    {
+        "id": null,
+        "api_id": "durham",
+        "name": "Durham Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "dyfed-powys",
+        "name": "Dyfed-Powys Police"
+    },
+    {
+        "id": null,
+        "api_id": "essex",
+        "name": "Essex Police"
+    },
+    {
+        "id": null,
+        "api_id": "gloucestershire",
+        "name": "Gloucestershire Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "greater-manchester",
+        "name": "Greater Manchester Police"
+    },
+    {
+        "id": null,
+        "api_id": "gwent",
+        "name": "Gwent Police"
+    },
+    {
+        "id": null,
+        "api_id": "hampshire",
+        "name": "Hampshire Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "hertfordshire",
+        "name": "Hertfordshire Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "humberside",
+        "name": "Humberside Police"
+    },
+    {
+        "id": null,
+        "api_id": "kent",
+        "name": "Kent Police"
+    },
+    {
+        "id": null,
+        "api_id": "lancashire",
+        "name": "Lancashire Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "leicestershire",
+        "name": "Leicestershire Police"
+    },
+    {
+        "id": null,
+        "api_id": "lincolnshire",
+        "name": "Lincolnshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "merseyside",
+        "name": "Merseyside Police"
+    },
+    {
+        "id": null,
+        "api_id": "metropolitan",
+        "name": "Metropolitan Police Service"
+    },
+    {
+        "id": null,
+        "api_id": "norfolk",
+        "name": "Norfolk Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "north-wales",
+        "name": "North Wales Police"
+    },
+    {
+        "id": null,
+        "api_id": "north-yorkshire",
+        "name": "North Yorkshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "northamptonshire",
+        "name": "Northamptonshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "northumbria",
+        "name": "Northumbria Police"
+    },
+    {
+        "id": null,
+        "api_id": "nottinghamshire",
+        "name": "Nottinghamshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "northern-ireland",
+        "name": "Police Service of Northern Ireland"
+    },
+    {
+        "id": null,
+        "api_id": "south-wales",
+        "name": "South Wales Police"
+    },
+    {
+        "id": null,
+        "api_id": "south-yorkshire",
+        "name": "South Yorkshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "staffordshire",
+        "name": "Staffordshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "suffolk",
+        "name": "Suffolk Constabulary"
+    },
+    {
+        "id": null,
+        "api_id": "surrey",
+        "name": "Surrey Police"
+    },
+    {
+        "id": null,
+        "api_id": "sussex",
+        "name": "Sussex Police"
+    },
+    {
+        "id": null,
+        "api_id": "thames-valley",
+        "name": "Thames Valley Police"
+    },
+    {
+        "id": null,
+        "api_id": "warwickshire",
+        "name": "Warwickshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "west-mercia",
+        "name": "West Mercia Police"
+    },
+    {
+        "id": null,
+        "api_id": "west-midlands",
+        "name": "West Midlands Police"
+    },
+    {
+        "id": null,
+        "api_id": "west-yorkshire",
+        "name": "West Yorkshire Police"
+    },
+    {
+        "id": null,
+        "api_id": "wiltshire",
+        "name": "Wiltshire Police"
+    }
+]
