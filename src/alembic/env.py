@@ -11,6 +11,7 @@ from src.models.bronze import *  # noqa: F403
 # access to the values within the .ini file in use.
 config = context.config
 db_url = os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+config.set_main_option("sqlalchemy.url", db_url)
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
@@ -60,7 +61,7 @@ def run_migrations_online() -> None:
 
     """
     connectable = engine_from_config(
-        db_url,
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
