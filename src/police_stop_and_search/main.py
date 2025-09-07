@@ -47,15 +47,41 @@ class PoliceStopAndSearch:
         source: Annotated[Directory, Doc(SOURCE_DOCS)],
         tag: Annotated[str, Doc(PYTHON_TAG_DOCS)] = "3.12-slim-bookworm",
     ) -> Container:
-        """Returns a container with the production dependencies installed.
-        This uses a cache volume to prevent re-installing packages on each call."""
+        """Returns a container with the production dependencies installed
+        This uses a cache volume to prevent re-installing packages on each call"""
         production_pip_cache = dag.cache_volume("production_pip_cache")
-        return (
+        container = (
             dag.container()
             .from_(f"python:{tag}")
             .with_mounted_cache("/root/.cache/pip", production_pip_cache)
             .with_workdir("/src")
-            .with_file("requirements.txt", source.file("requirements/production.txt"))
+        )
+        return self.install_requirements(
+            container, source, "requirements/production.txt"
+        )
+
+    @function
+    def development_dependencies(
+        self,
+        source: Annotated[Directory, Doc(SOURCE_DOCS)],
+        tag: Annotated[str, Doc(PYTHON_TAG_DOCS)] = "3.12-slim-bookworm",
+    ) -> Container:
+        """Returns a container with the production and development dependencies installed
+        This uses a cache volume to prevent re-installing packages on each call."""
+        development_pip_cache = dag.cache_volume("development_pip_cache")
+        container = self.production_dependencies(source, tag).with_mounted_cache(
+            "/root/.cache/pip", development_pip_cache
+        )
+        return self.install_requirements(
+            container, source, "requirements/development.txt"
+        )
+
+    def install_requirements(
+        self, container: Container, source: Directory, requirements_path: str
+    ) -> Container:
+        """Installs the requirements from the given path into the given container"""
+        return (
+            container.with_file("requirements.txt", source.file(requirements_path))
             .with_exec(["pip", "install", "-r", "requirements.txt"])
             .without_file("requirements.txt")
         )
