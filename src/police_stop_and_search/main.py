@@ -2,10 +2,10 @@ from typing import Annotated
 
 from dagger import Container, Directory, Doc, dag, function, object_type
 
-POSTGRES_TAG_DOCS = "Tag of the postgres image, defaults to 17.6-bookworm"
+POSTGRES_TAG_DOCS = "Tag of the postgres image"
 PYTHON_TAG_DOCS = "Tag of the python image"
-USERNAME_DOCS = "Username of the superuser, defaults to postgres"
-PASSWORD_DOCS = "Password of the superuser, defaults to password"
+USERNAME_DOCS = "Username of the superuser"
+PASSWORD_DOCS = "Password of the superuser"
 DATABASE_NAME_DOCS = "Name of the database created, defaults to postgres"
 SOURCE_DOCS = "Source directory containing the codebase"
 
