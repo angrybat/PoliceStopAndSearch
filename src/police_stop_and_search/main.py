@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from dagger import Container, Directory, Doc, Service, dag, function, object_type
+from dagger import Container, Directory, Doc, dag, function, object_type
 
 POSTGRES_TAG_DOC = Doc("Tag of the postgres image")
 PYTHON_TAG_DOC = Doc("Tag of the python image")
@@ -42,20 +42,6 @@ class PoliceStopAndSearch:
                 "/var/lib/postgresql/data", dag.cache_volume(cache_volume_name)
             )
         return container
-
-    @function
-    def postgres_service(
-        self,
-        tag: Annotated[str, POSTGRES_TAG_DOC] = "17.6-bookworm",
-        username: Annotated[str, USERNAME_DOC] = "postgres",
-        password: Annotated[str, PASSWORD_DOC] = "password",
-        database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
-        cache_volume_name: Annotated[str | None, CACHE_VOLUME_DOC] = None,
-    ) -> Service:
-        """Returns the postgres container as a service so it can be run via dagger"""
-        return self.postgres(
-            tag, username, password, database_name, cache_volume_name
-        ).as_service(use_entrypoint=True)
 
     @function
     async def production_dependencies(
@@ -107,12 +93,13 @@ class PoliceStopAndSearch:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
-    ) -> Service:
-        """Returns a service with the bronze database"""
+    ) -> Container:
+        """Returns a postgres container with the bronze database tables"""
         development_container = await self.development_dependencies(source, python_tag)
-        postgres_service = self.postgres_service(
+        postrges_container = self.postgres(
             postgres_tag, username, password, database_name, "bronze_db_data"
         )
+        postgres_service = postrges_container.as_service(use_entrypoint=True)
         await (
             development_container.with_service_binding("postgres", postgres_service)
             .with_env_variable(
@@ -125,7 +112,7 @@ class PoliceStopAndSearch:
             .with_exec(["alembic", "upgrade", "fb1ef6ecc640"])
             .sync()
         )
-        return postgres_service
+        return postrges_container
 
     def install_requirements(
         self, container: Container, source: Directory, requirements_path: str
