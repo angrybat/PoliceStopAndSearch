@@ -2,12 +2,12 @@ from typing import Annotated
 
 from dagger import Container, Directory, Doc, dag, function, object_type
 
-POSTGRES_TAG_DOCS = "Tag of the postgres image"
-PYTHON_TAG_DOCS = "Tag of the python image"
-USERNAME_DOCS = "Username of the superuser"
-PASSWORD_DOCS = "Password of the superuser"
-DATABASE_NAME_DOCS = "Name of the database created, defaults to postgres"
-SOURCE_DOCS = "Source directory containing the codebase"
+POSTGRES_TAG_DOC = Doc("Tag of the postgres image")
+PYTHON_TAG_DOC = Doc("Tag of the python image")
+USERNAME_DOC = Doc("Username of the superuser")
+PASSWORD_DOC = Doc("Password of the superuser")
+DATABASE_NAME_DOC = Doc("Name of the database created")
+SOURCE_DOC = Doc("Source directory containing the codebase")
 
 
 @object_type
@@ -15,10 +15,10 @@ class PoliceStopAndSearch:
     @function
     def postgres(
         self,
-        tag: Annotated[str, Doc(POSTGRES_TAG_DOCS)] = "17.6-bookworm",
-        username: Annotated[str, Doc(USERNAME_DOCS)] = "postgres",
-        password: Annotated[str, Doc(PASSWORD_DOCS)] = "password",
-        database_name: Annotated[str, Doc(DATABASE_NAME_DOCS)] = "postgres",
+        tag: Annotated[str, POSTGRES_TAG_DOC] = "17.6-bookworm",
+        username: Annotated[str, USERNAME_DOC] = "postgres",
+        password: Annotated[str, PASSWORD_DOC] = "password",
+        database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
     ) -> Container:
         """Returns a postgres container"""
         return (
@@ -33,10 +33,10 @@ class PoliceStopAndSearch:
     @function
     def postgres_service(
         self,
-        tag: Annotated[str, Doc(POSTGRES_TAG_DOCS)] = "17.6-bookworm",
-        username: Annotated[str, Doc(USERNAME_DOCS)] = "postgres",
-        password: Annotated[str, Doc(PASSWORD_DOCS)] = "password",
-        database_name: Annotated[str, Doc(DATABASE_NAME_DOCS)] = "postgres",
+        tag: Annotated[str, POSTGRES_TAG_DOC] = "17.6-bookworm",
+        username: Annotated[str, USERNAME_DOC] = "postgres",
+        password: Annotated[str, PASSWORD_DOC] = "password",
+        database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
     ) -> Container:
         """Returns the postgres container as a service so it can be run via dagger"""
         return self.postgres(tag, username, password, database_name).as_service()
@@ -44,8 +44,8 @@ class PoliceStopAndSearch:
     @function
     def production_dependencies(
         self,
-        source: Annotated[Directory, Doc(SOURCE_DOCS)],
-        tag: Annotated[str, Doc(PYTHON_TAG_DOCS)] = "3.12-slim-bookworm",
+        source: Annotated[Directory, SOURCE_DOC],
+        tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
     ) -> Container:
         """Returns a container with the production dependencies installed
         This uses a cache volume to prevent re-installing packages on each call"""
@@ -63,8 +63,8 @@ class PoliceStopAndSearch:
     @function
     def development_dependencies(
         self,
-        source: Annotated[Directory, Doc(SOURCE_DOCS)],
-        tag: Annotated[str, Doc(PYTHON_TAG_DOCS)] = "3.12-slim-bookworm",
+        source: Annotated[Directory, SOURCE_DOC],
+        tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
     ) -> Container:
         """Returns a container with the production and development dependencies installed
         This uses a cache volume to prevent re-installing packages on each call."""
