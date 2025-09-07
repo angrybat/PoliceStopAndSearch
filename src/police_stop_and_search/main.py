@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from dagger import Container, Directory, Doc, dag, function, object_type
+from dagger import Container, Directory, Doc, Service, dag, function, object_type
 
 POSTGRES_TAG_DOC = Doc("Tag of the postgres image")
 PYTHON_TAG_DOC = Doc("Tag of the python image")
@@ -40,7 +40,7 @@ class PoliceStopAndSearch:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
-    ) -> Container:
+    ) -> Service:
         """Returns the postgres container as a service so it can be run via dagger"""
         return self.postgres(tag, username, password, database_name).as_service()
 
