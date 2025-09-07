@@ -8,6 +8,9 @@ USERNAME_DOC = Doc("Username of the superuser")
 PASSWORD_DOC = Doc("Password of the superuser")
 DATABASE_NAME_DOC = Doc("Name of the database created")
 SOURCE_DOC = Doc("Source directory containing the codebase")
+USER = "sgt_angle"
+USER_HOME = f"/home/{USER}"
+PIP_CACHE_PATH = f"{USER_HOME}/.cache/pip"
 
 
 @object_type
@@ -42,7 +45,7 @@ class PoliceStopAndSearch:
         return self.postgres(tag, username, password, database_name).as_service()
 
     @function
-    def production_dependencies(
+    async def production_dependencies(
         self,
         source: Annotated[Directory, SOURCE_DOC],
         tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
@@ -53,15 +56,22 @@ class PoliceStopAndSearch:
         container = (
             dag.container()
             .from_(f"python:{tag}")
-            .with_mounted_cache("/root/.cache/pip", production_pip_cache)
-            .with_workdir("/src")
+            .with_exec(["useradd", "-m", USER])
+            .with_user(USER)
+            .with_env_variable("PIP_CACHE_DIR", PIP_CACHE_PATH)
+            .with_mounted_cache(PIP_CACHE_PATH, production_pip_cache)
+            .with_workdir("/app")
+        )
+        path = await container.env_variable("PATH")
+        container = container.with_env_variable(
+            "PATH", f"{USER_HOME}/.local/bin:{path}"
         )
         return self.install_requirements(
             container, source, "requirements/production.txt"
         )
 
     @function
-    def development_dependencies(
+    async def development_dependencies(
         self,
         source: Annotated[Directory, SOURCE_DOC],
         tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
@@ -69,8 +79,9 @@ class PoliceStopAndSearch:
         """Returns a container with the production and development dependencies installed
         This uses a cache volume to prevent re-installing packages on each call."""
         development_pip_cache = dag.cache_volume("development_pip_cache")
-        container = self.production_dependencies(source, tag).with_mounted_cache(
-            "/root/.cache/pip", development_pip_cache
+        container = await self.production_dependencies(source, tag)
+        container = container.with_mounted_cache(
+            PIP_CACHE_PATH, development_pip_cache
         )
         return self.install_requirements(
             container, source, "requirements/development.txt"
@@ -82,6 +93,6 @@ class PoliceStopAndSearch:
         """Installs the requirements from the given path into the given container"""
         return (
             container.with_file("requirements.txt", source.file(requirements_path))
-            .with_exec(["pip", "install", "-r", "requirements.txt"])
+            .with_exec(["pip", "install", "--user", "-r", "requirements.txt"])
             .without_file("requirements.txt")
         )
