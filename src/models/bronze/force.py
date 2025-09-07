@@ -13,13 +13,15 @@ class Force(SQLModel, table=True):
     __tablename__ = "Force"
     __table_args__ = {"schema": "bronze"}
 
-    id: int | None = Field(sa_column=Column(
-        "Id", primary_key=True, nullable=False, type_=INTEGER))
+    id: int | None = Field(
+        sa_column=Column("Id", primary_key=True, nullable=False, type_=INTEGER)
+    )
     name: str = Field(sa_column=Column("Name", nullable=False, type_=String))
-    api_id: str = Field(sa_column=Column(
-        "ApiId", nullable=False, unique=True, type_=String))
+    api_id: str = Field(
+        sa_column=Column("ApiId", nullable=False, unique=True, type_=String)
+    )
 
-    stop_and_searches: list["StopAndSearch"] = Relationship(
-        back_populates="force")
+    stop_and_searches: list["StopAndSearch"] = Relationship(back_populates="force")
     available_dates: list["AvailableDate"] = Relationship(
-        back_populates="forces", link_model=AvailableDateForceMapping)
+        back_populates="forces", link_model=AvailableDateForceMapping
+    )

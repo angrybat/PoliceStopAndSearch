@@ -12,10 +12,13 @@ class AvailableDate(SQLModel, table=True):
     __tablename__ = "AvailableDate"
     __table_args__ = {"schema": "bronze"}
 
-    id: int | None = Field(sa_column=Column(
-        "Id", nullable=False, primary_key=True, type_=INTEGER))
-    year_month: str = Field(sa_column=Column(
-        "YearMonth", type_=String(7), nullable=False, unique=True))
+    id: int | None = Field(
+        sa_column=Column("Id", nullable=False, primary_key=True, type_=INTEGER)
+    )
+    year_month: str = Field(
+        sa_column=Column("YearMonth", type_=String(7), nullable=False, unique=True)
+    )
 
     forces: list["Force"] = Relationship(
-        back_populates="available_dates", link_model=AvailableDateForceMapping)
+        back_populates="available_dates", link_model=AvailableDateForceMapping
+    )
