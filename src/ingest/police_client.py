@@ -1,4 +1,4 @@
-import logging
+from logging import Logger, getLogger
 from typing import Any
 
 from httpx import AsyncClient, HTTPStatusError
@@ -11,7 +11,8 @@ BASE_URL = "https://data.police.uk/api/"
 
 
 class PoliceClient(AsyncClient):
-    def __init__(self, base_url: str = BASE_URL):
+    def __init__(self, base_url: str = BASE_URL, logger: Logger | None = None):
+        self.logger = logger or getLogger("PoliceClient")
         super().__init__(base_url=base_url)
 
     async def get_forces(self) -> list[Force]:
@@ -21,7 +22,7 @@ class PoliceClient(AsyncClient):
         try:
             return [get_force(force) for force in forces]
         except KeyError as error:
-            logging.exception("Failed to map forces returned from Police API")
+            self.logger.exception("Failed to map forces returned from Police API")
             raise error
 
     async def get_available_dates(self) -> list[AvailableDate]:
@@ -31,7 +32,9 @@ class PoliceClient(AsyncClient):
         try:
             return [get_available_date(date) for date in available_dates]
         except KeyError as error:
-            logging.exception("Failed to map available dates returned from Police API")
+            self.logger.exception(
+                "Failed to map available dates returned from Police API"
+            )
             raise error
 
     async def get_stop_and_searches(
@@ -63,7 +66,7 @@ class PoliceClient(AsyncClient):
                 else f"Failed to map stop and searches without location"
                 f" from Police API for force with id '{force_id}' on date '{date}'"
             )
-            logging.exception(error_message)
+            self.logger.exception(error_message)
             raise error
 
     async def _get_response_body(self, endpoint: str, error_message: str) -> list[dict]:
@@ -71,7 +74,7 @@ class PoliceClient(AsyncClient):
         try:
             response.raise_for_status()
         except HTTPStatusError as error:
-            logging.exception(error_message)
+            self.logger.exception(error_message)
             raise error
         return response.json()
 
