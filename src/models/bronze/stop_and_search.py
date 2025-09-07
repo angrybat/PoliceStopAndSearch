@@ -1,9 +1,9 @@
 from sqlmodel import (
     BOOLEAN,
-    DATETIME,
     DECIMAL,
     INTEGER,
     Column,
+    DateTime,
     Field,
     ForeignKey,
     Relationship,
@@ -27,7 +27,7 @@ class StopAndSearch(SQLModel, table=True):
     involved_person: bool = Field(
         sa_column=Column("InvolvedPerson", nullable=False, type_=BOOLEAN))
     datetime: str = Field(sa_column=Column(
-        "Datetime", nullable=False, type_=DATETIME))
+        "Datetime", nullable=False, type_=DateTime(timezone=True)))
     operation: bool | None = Field(sa_column=Column(
         "Operation", nullable=True, type_=BOOLEAN))
     operation_name: str | None = Field(
