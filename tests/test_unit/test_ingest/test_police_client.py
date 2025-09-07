@@ -30,7 +30,7 @@ class TestGetForces:
         mock_get.assert_called_once_with("forces")
 
     @pytest.mark.asyncio
-    async def test_logs_error_on_failure(self, caplog: LogCaptureFixture):
+    async def test_logs_error_on_request_failure(self, caplog: LogCaptureFixture):
         police_client = PoliceClient()
         mock_response = Mock()
         mock_response.json.return_value = []
@@ -46,3 +46,22 @@ class TestGetForces:
         record = caplog.records[-1]
         assert record.levelname == "ERROR"
         assert "Failed to fetch forces from Police API" in record.message
+
+    @pytest.mark.asyncio
+    async def test_logs_error_on_mapping_failure(self, caplog: LogCaptureFixture):
+        police_client = PoliceClient()
+        returned_forces = [
+            {"not_id": "force1", "not_name": "Force One"},
+            {"id": "force2", "name": "Force Two"},
+        ]
+        mock_response = Mock()
+        mock_response.json.return_value = returned_forces
+        mock_get = AsyncMock(return_value=mock_response)
+        police_client.get = mock_get
+
+        with pytest.raises(KeyError):
+            await police_client.get_forces()
+
+        record = caplog.records[-1]
+        assert record.levelname == "ERROR"
+        assert "Failed to map forces returned from Police API" in record.message
