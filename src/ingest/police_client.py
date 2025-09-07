@@ -5,6 +5,7 @@ from httpx import AsyncClient, HTTPStatusError
 
 from src.models.bronze.available_date import AvailableDate
 from src.models.bronze.force import Force
+from src.models.bronze.stop_and_search import StopAndSearch
 
 BASE_URL = "https://data.police.uk/api/"
 
@@ -30,6 +31,25 @@ class PoliceClient(AsyncClient):
         except KeyError as error:
             logging.exception("Failed to map available dates returned from Police API")
             raise error
+
+    async def get_stop_and_searches(
+        self, date: str, force_id: str, with_location: bool
+    ) -> list[StopAndSearch]:
+        endpoint = (
+            f"stops-force?force={force_id}&date={date}"
+            if with_location
+            else f"stops-no-location?force={force_id}&date={date}"
+        )
+        object_type = (
+            "stop and searches with location"
+            if with_location
+            else "stop and searches without location"
+        )
+        stop_and_searches = await self._get_response_body(endpoint, object_type)
+        return [
+            get_stop_and_search(stop_and_search)
+            for stop_and_search in stop_and_searches
+        ]
 
     async def _get_response_body(
         self, endpoint: str, type: str | None = None
