@@ -21,7 +21,7 @@ class StopAndSearch(SQLModel, table=True):
     id: int | None = Field(
         sa_column=Column("Id", primary_key=True, nullable=False, type_=INTEGER)
     )
-    force_id: int = Field(
+    force_id: int | None = Field(
         sa_column=Column(
             "ForceId", ForeignKey("bronze.Force.Id"), nullable=False, type_=INTEGER
         )
@@ -67,7 +67,10 @@ class StopAndSearch(SQLModel, table=True):
     object_of_search: str = Field(
         sa_column=Column("ObjectOfSearch", nullable=False, type_=String)
     )
-    outcome: str = Field(sa_column=Column("Outcome", nullable=False, type_=String))
+    outcome_name: str = Field(
+        sa_column=Column("OutcomeName", nullable=False, type_=String)
+    )
+    outcome_id: str = Field(sa_column=Column("OutcomeId", nullable=False, type_=String))
     outcome_linked_to_object_of_search: bool | None = Field(
         sa_column=Column("OutcomeLinkedToObjectOfSearch", nullable=True, type_=BOOLEAN)
     )

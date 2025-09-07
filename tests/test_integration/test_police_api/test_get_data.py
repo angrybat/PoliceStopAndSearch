@@ -91,3 +91,35 @@ class TestGetAvailableDates:
 
         for expected_date in expected_available_dates:
             assert expected_date in available_dates
+
+
+class TestGetStopAndSearches:
+    @pytest.mark.asyncio
+    async def test_get_stop_and_searches_with_location(
+        self, expected_stop_and_searches_with_location: list[StopAndSearch]
+    ):
+        police_client = PoliceClient()
+        date = "2023-07"
+        force_id = "leicestershire"
+        with_location = True
+
+        stop_and_searches = await police_client.get_stop_and_searches(
+            date=date, force_id=force_id, with_location=with_location
+        )
+
+        assert stop_and_searches == expected_stop_and_searches_with_location
+
+    @pytest.mark.asyncio
+    async def test_get_stop_and_searches_without_location(
+        self, expected_stop_and_searches_without_location: list[StopAndSearch]
+    ):
+        police_client = PoliceClient()
+        date = "2023-07"
+        force_id = "leicestershire"
+        with_location = False
+
+        stop_and_searches = await police_client.get_stop_and_searches(
+            date=date, force_id=force_id, with_location=with_location
+        )
+
+        assert stop_and_searches == expected_stop_and_searches_without_location
