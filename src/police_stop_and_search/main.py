@@ -98,6 +98,35 @@ class PoliceStopAndSearch:
             container, source, "requirements/development.txt"
         )
 
+    @function
+    async def bronze_database(
+        self,
+        source: Annotated[Directory, SOURCE_DOC],
+        python_tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
+        postgres_tag: Annotated[str, POSTGRES_TAG_DOC] = "17.6-bookworm",
+        username: Annotated[str, USERNAME_DOC] = "postgres",
+        password: Annotated[str, PASSWORD_DOC] = "password",
+        database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+    ) -> Service:
+        """Returns a service with the bronze database"""
+        development_container = await self.development_dependencies(source, python_tag)
+        postgres_service = self.postgres_service(
+            postgres_tag, username, password, database_name, "bronze_db_data"
+        )
+        await (
+            development_container.with_service_binding("postgres", postgres_service)
+            .with_env_variable(
+                "DATABASE_URL",
+                f"postgresql+psycopg2://{username}:{password}@postgres/{database_name}",
+            )
+            .with_directory("/app/src/alembic", source.directory("src/alembic"))
+            .with_directory("/app/src/models", source.directory("src/models"))
+            .with_file("/app/alembic.ini", source.file("alembic.ini"))
+            .with_exec(["alembic", "upgrade", "fb1ef6ecc640"])
+            .sync()
+        )
+        return postgres_service
+
     def install_requirements(
         self, container: Container, source: Directory, requirements_path: str
     ) -> Container:
