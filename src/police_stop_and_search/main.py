@@ -96,10 +96,10 @@ class PoliceStopAndSearch:
     ) -> Container:
         """Returns a postgres container with the bronze database tables"""
         development_container = await self.development_dependencies(source, python_tag)
-        postrges_container = self.postgres(
+        postgres_container = self.postgres(
             postgres_tag, username, password, database_name, "bronze_db_data"
         )
-        postgres_service = postrges_container.as_service(use_entrypoint=True)
+        postgres_service = postgres_container.as_service(use_entrypoint=True)
         await (
             development_container.with_service_binding("postgres", postgres_service)
             .with_env_variable(
@@ -112,7 +112,7 @@ class PoliceStopAndSearch:
             .with_exec(["alembic", "upgrade", "fb1ef6ecc640"])
             .sync()
         )
-        return postrges_container
+        return postgres_container
 
     def install_requirements(
         self, container: Container, source: Directory, requirements_path: str
