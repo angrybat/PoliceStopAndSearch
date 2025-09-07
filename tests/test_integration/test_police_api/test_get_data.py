@@ -1,11 +1,20 @@
 import json
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, TypeVar
 
 import pytest
+from sqlmodel import SQLModel
 
-from src.ingest.police_client import PoliceClient
+from src.ingest.police_client import (
+    PoliceClient,
+    get_available_date,
+    get_force,
+    get_stop_and_search,
+)
 from src.models.bronze.available_date import AvailableDate
 from src.models.bronze.force import Force
+from src.models.bronze.stop_and_search import StopAndSearch
 
 
 @pytest.fixture
@@ -15,21 +24,50 @@ def test_data_directory() -> Path:
 
 @pytest.fixture
 def expected_forces(test_data_directory: Path) -> list[Force]:
-    expected_forces_path = test_data_directory / "forces.json"
-    with expected_forces_path.open("r") as file:
-        expected_forces = json.load(file)
-    return [Force(**force) for force in expected_forces]
+    return get_data_from_file(test_data_directory, "forces.json", get_force)
 
 
 @pytest.fixture
 def expected_available_dates(test_data_directory: Path) -> list[AvailableDate]:
-    expected_available_dates_path = test_data_directory / "available_dates.json"
-    with expected_available_dates_path.open("r") as file:
-        expected_available_dates = json.load(file)
-    return [
-        AvailableDate(id=None, year_month=available_date["date"])
-        for available_date in expected_available_dates
-    ]
+    return get_data_from_file(
+        test_data_directory, "available_dates.json", get_available_date
+    )
+
+
+@pytest.fixture
+def expected_stop_and_searches_with_location(
+    test_data_directory: Path,
+) -> list[StopAndSearch]:
+    return get_data_from_file(
+        test_data_directory,
+        "stop_and_searches_with_location.json",
+        get_stop_and_search,
+    )
+
+
+@pytest.fixture
+def expected_stop_and_searches_without_location(
+    test_data_directory: Path,
+) -> list[StopAndSearch]:
+    return get_data_from_file(
+        test_data_directory,
+        "stop_and_searches_without_location.json",
+        get_stop_and_search,
+    )
+
+
+T = TypeVar("T", bound=SQLModel)
+
+
+def get_data_from_file(
+    test_data_directory: Path,
+    file_name: str,
+    mapping_func: Callable[[dict[str, Any]], T],
+) -> list[T]:
+    expected_data_path = test_data_directory / file_name
+    with expected_data_path.open("r") as file:
+        expected_data = json.load(file)
+    return [mapping_func(data) for data in expected_data]
 
 
 class TestGetForces:
