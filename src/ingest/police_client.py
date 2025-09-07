@@ -76,7 +76,7 @@ class PoliceClient(AsyncClient):
         return response.json()
 
 
-def get_force(force: list[dict[str, Any]]) -> Force:
+def get_force(force: dict[str, Any]) -> Force:
     return Force(id=None, name=force["name"], api_id=force["id"])
 
 
