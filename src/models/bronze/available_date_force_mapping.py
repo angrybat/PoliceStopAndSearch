@@ -1,4 +1,4 @@
-from sqlmodel import INTEGER, Column, Field, ForeignKey, SQLModel
+from sqlmodel import INTEGER, Column, Field, ForeignKey, SQLModel, String
 
 
 class AvailableDateForceMapping(SQLModel, table=True):
@@ -14,12 +14,12 @@ class AvailableDateForceMapping(SQLModel, table=True):
             type_=INTEGER,
         )
     )
-    force_id: int = Field(
+    force_id: str = Field(
         sa_column=Column(
             "ForceId",
             ForeignKey("bronze.Force.Id"),
             nullable=False,
             primary_key=True,
-            type_=INTEGER,
+            type_=String(20),
         )
     )
