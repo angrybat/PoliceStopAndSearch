@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -37,8 +38,8 @@ class TestGetForces:
         forces = await police_client.get_forces()
 
         assert forces == [
-            Force(id=None, name="Force One", api_id="force1"),
-            Force(id=None, name="Force Two", api_id="force2"),
+            Force(id="force1", name="Force One"),
+            Force(id="force2", name="Force Two"),
         ]
         mock_get.assert_called_once_with("forces")
 
@@ -72,12 +73,15 @@ class TestGetForces:
         mock_get = AsyncMock(return_value=mock_response)
         police_client.get = mock_get
 
-        with pytest.raises(KeyError):
-            await police_client.get_forces()
+        forces = await police_client.get_forces()
 
+        assert forces == [Force(id="force2", name="Force Two")]
         record = caplog.records[-1]
         assert record.levelname == "ERROR"
-        assert "Failed to map forces returned from Police API" in record.message
+        assert (
+            "Failed to map 'Force' at index '0' returned from Police API"
+            in record.message
+        )
 
 
 class TestGetAvailableDates:
@@ -93,9 +97,9 @@ class TestGetAvailableDates:
         mock_get = AsyncMock(return_value=mock_response)
         police_client.get = mock_get
 
-        forces = await police_client.get_available_dates()
+        available_dates = await police_client.get_available_dates()
 
-        assert forces == [
+        assert available_dates == [
             AvailableDate(id=None, year_month="2022-07"),
             AvailableDate(id=None, year_month="2023-07"),
         ]
@@ -131,13 +135,14 @@ class TestGetAvailableDates:
         mock_get = AsyncMock(return_value=mock_response)
         police_client.get = mock_get
 
-        with pytest.raises(KeyError):
-            await police_client.get_available_dates()
+        available_dates = await police_client.get_available_dates()
 
+        assert available_dates == [AvailableDate(id=None, year_month="2023-07")]
         record = caplog.records[-1]
         assert record.levelname == "ERROR"
         assert (
-            "Failed to map available dates returned from Police API" in record.message
+            "Failed to map 'AvailableDate' at index '0' returned from Police API"
+            in record.message
         )
 
 
@@ -226,7 +231,7 @@ class TestGetStopAndSearches:
                 gender="Male",
                 legislation="Firearms Act 1968 (section 47)",
                 outcome_linked_to_object_of_search=None,
-                datetime="2023-07-31T15:37:00+00:00",
+                datetime=datetime(2023, 7, 31, 15, 37, 00, tzinfo=UTC),
                 removal_of_more_than_outer_clothing=False,
                 outcome_id="bu-no-further-action",
                 outcome_name="A no further action disposal",
@@ -249,7 +254,7 @@ class TestGetStopAndSearches:
                 gender="Female",
                 legislation="Misuse of Drugs Act 1971 (section 23)",
                 outcome_linked_to_object_of_search=True,
-                datetime="2023-07-31T10:50:00+00:00",
+                datetime=datetime(2023, 7, 31, 10, 50, 00, tzinfo=UTC),
                 removal_of_more_than_outer_clothing=False,
                 outcome_id="bu-arrest",
                 outcome_name="Arrest",
@@ -375,12 +380,17 @@ class TestGetStopAndSearches:
         force_id = "leicestershire"
         date = "2023-07"
 
-        with pytest.raises(KeyError):
-            await police_client.get_stop_and_searches(date, force_id, with_location)
+        stop_and_searches = await police_client.get_stop_and_searches(
+            date, force_id, with_location
+        )
 
+        assert stop_and_searches == [
+            StopAndSearch.model_validate(stop_and_search)
+            for stop_and_search in returned_stop_and_searches[1:]
+        ]
         record = caplog.records[-1]
         assert record.levelname == "ERROR"
         assert (
-            f"Failed to map {type} from Police API for "
-            f"force with id '{force_id}' on date '{date}'" in record.message
+            "Failed to map 'StopAndSearch' at index '0' returned from Police API"
+            in record.message
         )
