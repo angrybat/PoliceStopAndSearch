@@ -33,17 +33,15 @@ def upgrade() -> None:
     )
     op.create_table(
         "Force",
-        sa.Column("Id", sa.INTEGER(), nullable=False),
+        sa.Column("Id", sa.String(length=20), nullable=False),
         sa.Column("Name", sa.String(), nullable=False),
-        sa.Column("ApiId", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("Id"),
-        sa.UniqueConstraint("ApiId"),
         schema="bronze",
     )
     op.create_table(
         "AvailableDateForceMapping",
         sa.Column("AvailableDateId", sa.INTEGER(), nullable=False),
-        sa.Column("ForceId", sa.INTEGER(), nullable=False),
+        sa.Column("ForceId", sa.String(length=20), nullable=False),
         sa.ForeignKeyConstraint(
             ["AvailableDateId"],
             ["bronze.AvailableDate.Id"],
@@ -58,7 +56,7 @@ def upgrade() -> None:
     op.create_table(
         "StopAndSearch",
         sa.Column("Id", sa.INTEGER(), nullable=False),
-        sa.Column("ForceId", sa.INTEGER(), nullable=False),
+        sa.Column("ForceId", sa.String(length=20), nullable=False),
         sa.Column("Type", sa.String(), nullable=False),
         sa.Column("InvolvedPerson", sa.BOOLEAN(), nullable=False),
         sa.Column("Datetime", sa.DateTime(timezone=True), nullable=False),
@@ -69,12 +67,13 @@ def upgrade() -> None:
         sa.Column("StreetId", sa.INTEGER(), nullable=True),
         sa.Column("StreetName", sa.String(), nullable=True),
         sa.Column("Gender", sa.String(), nullable=True),
-        sa.Column("AgeRange", sa.String(), nullable=False),
+        sa.Column("AgeRange", sa.String(), nullable=True),
         sa.Column("SelfDefinedEthnicity", sa.String(), nullable=False),
-        sa.Column("OfficerDefinedEthnicity", sa.String(), nullable=False),
-        sa.Column("Legislation", sa.String(), nullable=False),
-        sa.Column("ObjectOfSearch", sa.String(), nullable=False),
-        sa.Column("Outcome", sa.String(), nullable=False),
+        sa.Column("OfficerDefinedEthnicity", sa.String(), nullable=True),
+        sa.Column("Legislation", sa.String(), nullable=True),
+        sa.Column("ObjectOfSearch", sa.String(), nullable=True),
+        sa.Column("OutcomeName", sa.String(), nullable=False),
+        sa.Column("OutcomeId", sa.String(), nullable=False),
         sa.Column("OutcomeLinkedToObjectOfSearch", sa.BOOLEAN(), nullable=True),
         sa.Column("RemovalOfMoreThanOuterClothing", sa.BOOLEAN(), nullable=True),
         sa.ForeignKeyConstraint(
