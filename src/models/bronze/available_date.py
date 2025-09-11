@@ -54,9 +54,8 @@ class AvailableDateWithForceIds(SQLModel):
         return values
 
     def __eq__(self, other):
-        if isinstance(other, AvailableDateWithForceIds):
-            return (
-                other.year_month == self.year_month
-                and other.force_ids == self.force_ids
+        if isinstance(other, AvailableDate):
+            return other.year_month == self.year_month and set(self.force_ids) == set(
+                force.id for force in other.forces
             )
         return False

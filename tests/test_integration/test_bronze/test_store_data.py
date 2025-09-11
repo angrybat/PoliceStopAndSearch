@@ -1,14 +1,15 @@
 import os
 from collections.abc import Generator
+from datetime import datetime
 
 import pytest
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import joinedload
-from sqlmodel import Session, SQLModel, inspect, select, text
+from sqlmodel import Session, SQLModel, desc, inspect, select, text
 
 from src.ingest.available_date_repository import AvailableDateRepository
 from src.ingest.police_client import PoliceClient
-from src.models.bronze.available_date import AvailableDate
+from src.models.bronze.available_date import AvailableDate, AvailableDateWithForceIds
 from src.models.bronze.force import Force
 
 DEFAULT_DB_URL = "postgresql+psycopg2://postgres:password@localhost:5432/postgres"
@@ -56,16 +57,20 @@ class TestAvailableDateRepository:
         self,
         engine: Engine,
         available_date_repository: AvailableDateRepository,
-        expected_available_dates: list[AvailableDate],
+        expected_available_dates: list[AvailableDateWithForceIds],
         expected_forces: list[Force],
     ) -> None:
-        await available_date_repository.store_available_dates()
+        await available_date_repository.store_available_dates(
+            datetime(2023, 4, 1), datetime(2023, 6, 1)
+        )
 
         with Session(engine) as session:
             stored_forces = session.exec(select(Force)).all()
             stored_available_dates = (
                 session.exec(
-                    select(AvailableDate).options(joinedload(AvailableDate.forces))  # type: ignore
+                    select(AvailableDate)
+                    .order_by(desc(AvailableDate.year_month))
+                    .options(joinedload(AvailableDate.forces))  # type: ignore
                 )
                 .unique()
                 .all()
@@ -73,5 +78,4 @@ class TestAvailableDateRepository:
         assert sorted(stored_forces, key=lambda force: force.id) == sorted(
             expected_forces, key=lambda force: force.id
         )
-        for expected_date in expected_available_dates:
-            assert expected_date in stored_available_dates
+        assert stored_available_dates == expected_available_dates

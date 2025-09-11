@@ -1,3 +1,4 @@
+from datetime import datetime
 from logging import Logger, getLogger
 from typing import TypeVar
 
@@ -25,11 +26,21 @@ class PoliceClient(AsyncClient):
         )
         return self._map_vailidate_models(Force, forces)
 
-    async def get_available_dates(self) -> list[AvailableDateWithForceIds]:
+    async def get_available_dates(
+        self, from_date: datetime, to_date: datetime
+    ) -> list[AvailableDateWithForceIds]:
         available_dates = await self._get_response_body(
             "crimes-street-dates", "Failed to fetch available dates from Police API"
         )
-        return self._map_vailidate_models(AvailableDateWithForceIds, available_dates)
+        from_year_month = from_date.strftime("%Y-%m")
+        to_year_month = to_date.strftime("%Y-%m")
+        return [
+            date
+            for date in self._map_vailidate_models(
+                AvailableDateWithForceIds, available_dates
+            )
+            if from_year_month <= date.year_month and date.year_month <= to_year_month
+        ]
 
     async def get_stop_and_searches(
         self, date: str, force_id: str, with_location: bool

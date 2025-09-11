@@ -1,4 +1,5 @@
 from asyncio import gather
+from datetime import datetime
 
 from sqlalchemy import Engine
 from sqlmodel import Session
@@ -16,10 +17,12 @@ class AvailableDateRepository:
         self.police_client = police_client
         self.engine = engine
 
-    async def store_available_dates(self) -> None:
+    async def store_available_dates(
+        self, from_date: datetime, to_date: datetime
+    ) -> None:
         forces, available_dates = await gather(
             self.police_client.get_forces(),
-            self.police_client.get_available_dates(),
+            self.police_client.get_available_dates(from_date, to_date),
         )
         with Session(self.engine) as session:
             session.add_all(forces)
