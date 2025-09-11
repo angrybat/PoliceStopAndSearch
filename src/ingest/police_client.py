@@ -5,7 +5,7 @@ from httpx import AsyncClient, HTTPStatusError
 from pydantic_core import ValidationError
 from sqlmodel import SQLModel
 
-from src.models.bronze.available_date import AvailableDate
+from src.models.bronze.available_date import AvailableDateWithForceIds
 from src.models.bronze.force import Force
 from src.models.bronze.stop_and_search import StopAndSearch
 
@@ -25,11 +25,11 @@ class PoliceClient(AsyncClient):
         )
         return self._map_vailidate_models(Force, forces)
 
-    async def get_available_dates(self) -> list[AvailableDate]:
+    async def get_available_dates(self) -> list[AvailableDateWithForceIds]:
         available_dates = await self._get_response_body(
             "crimes-street-dates", "Failed to fetch available dates from Police API"
         )
-        return self._map_vailidate_models(AvailableDate, available_dates)
+        return self._map_vailidate_models(AvailableDateWithForceIds, available_dates)
 
     async def get_stop_and_searches(
         self, date: str, force_id: str, with_location: bool

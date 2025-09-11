@@ -28,6 +28,35 @@ class AvailableDate(SQLModel, table=True):
     # SQLModel does not support aliases at the moment thus we need to use a validator
     @model_validator(mode="before")
     @classmethod
-    def set_month_year(cls, values: dict[str, Any]) -> dict[str, Any]:
+    def set_year_month(cls, values: dict[str, Any]) -> dict[str, Any]:
         values["year_month"] = values.get("date")
         return values
+
+    def __eq__(self, other):
+        if isinstance(other, AvailableDateWithForceIds):
+            return other.year_month == self.year_month and set(other.force_ids) == set(
+                force.id for force in self.forces
+            )
+        return False
+
+
+# SQLModel does not support fields that are not database columns
+class AvailableDateWithForceIds(SQLModel):
+    year_month: str = Field()
+    force_ids: list[str] = Field()
+
+    # SQLModel does not support aliases at the moment thus we need to use a validator
+    @model_validator(mode="before")
+    @classmethod
+    def set_year_month(cls, values: dict[str, Any]) -> dict[str, Any]:
+        values["year_month"] = values.get("date")
+        values["force_ids"] = values.get("stop-and-search")
+        return values
+
+    def __eq__(self, other):
+        if isinstance(other, AvailableDateWithForceIds):
+            return (
+                other.year_month == self.year_month
+                and other.force_ids == self.force_ids
+            )
+        return False

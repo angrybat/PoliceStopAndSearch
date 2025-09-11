@@ -16,7 +16,9 @@ class Force(SQLModel, table=True):
     id: str | None = Field(
         sa_column=Column("Id", primary_key=True, nullable=False, type_=String(20)),
     )
-    name: str = Field(sa_column=Column("Name", nullable=False, type_=String))
+    name: str | None = Field(
+        default=None, sa_column=Column("Name", nullable=True, type_=String)
+    )
 
     stop_and_searches: list["StopAndSearch"] = Relationship(back_populates="force")
     available_dates: list["AvailableDate"] = Relationship(
