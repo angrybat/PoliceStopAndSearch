@@ -72,7 +72,7 @@ class StopAndSearchRepository:
         except HTTPStatusError:
             return False
 
-        stop_and_searches = [
+        filtered_stop_and_searches = [
             stop_and_search
             for stop_and_search in with_location + without_location
             if from_datetime <= stop_and_search.datetime
@@ -81,7 +81,7 @@ class StopAndSearchRepository:
 
         with Session(self.engine) as session:
             try:
-                session.add_all(stop_and_searches)
+                session.add_all(filtered_stop_and_searches)
                 session.commit()
             except SQLAlchemyError:
                 self.logger.exception(
