@@ -6,7 +6,7 @@ from sqlmodel import Session
 
 from src.ingest.police_client import PoliceClient
 from src.ingest.repositories.force_repository import ForceRepository
-from src.models.bronze.available_date import AvailableDate
+from src.models.bronze.available_date import AvailableDate, AvailableDateWithForceIds
 from src.models.bronze.available_date_force_mapping import AvailableDateForceMapping
 from src.models.bronze.force import Force
 
@@ -19,26 +19,46 @@ class AvailableDateRepository:
 
     async def store_available_dates(
         self, from_date: datetime, to_date: datetime
-    ) -> None:
+    ) -> bool:
         forces, available_dates = await gather(
-            self.police_client.get_forces(),
+            self.force_repository.store_forces(),
             self.police_client.get_available_dates(from_date, to_date),
         )
+        if forces is None:
+            return False
+
+        available_date_force_ids = set(
+            [force_id for date in available_dates for force_id in date.force_ids]
+        )
+        missing_forces = [
+            Force(id=force_id)
+            for force_id in available_date_force_ids
+            if force_id not in forces
+        ]
         with Session(self.engine) as session:
-            session.add_all(forces)
-            force_ids = [force.id for force in forces]
-            for date in available_dates:
-                available_date = AvailableDate(year_month=date.year_month)
-                session.add(available_date)
-                session.flush()
-                for force_id in date.force_ids:
-                    if force_id not in force_ids:
-                        session.add(Force(id=force_id))
-                        session.flush()
-                        force_ids.append(force_id)
-                    session.add(
-                        AvailableDateForceMapping(
-                            available_date_id=available_date.id, force_id=force_id
-                        )
+            session.add_all(missing_forces)
+            session.commit()
+
+        store_available_dates = [
+            self.store_available_date(available_date)
+            for available_date in available_dates
+        ]
+        await gather(*store_available_dates)
+        return True
+
+    async def store_available_date(
+        self, available_date_with_force_ids: AvailableDateWithForceIds
+    ):
+        with Session(self.engine) as session:
+            available_date = AvailableDate(
+                year_month=available_date_with_force_ids.year_month
+            )
+            session.add(available_date)
+            session.flush()
+            for force_id in available_date_with_force_ids.force_ids:
+                session.add(
+                    AvailableDateForceMapping(
+                        available_date_id=available_date.id, force_id=force_id
                     )
+                )
             session.commit()

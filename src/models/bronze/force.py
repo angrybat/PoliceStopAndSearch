@@ -24,3 +24,10 @@ class Force(SQLModel, table=True):
     available_dates: list["AvailableDate"] = Relationship(
         back_populates="forces", link_model=AvailableDateForceMapping
     )
+
+    def __eq__(self, other):
+        if isinstance(other, Force):
+            return other.id == self.id and other.name == self.name
+        if isinstance(other, str):
+            return other == self.id
+        return False
