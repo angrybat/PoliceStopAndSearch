@@ -1,4 +1,5 @@
 from datetime import datetime as datetime_type
+from decimal import Decimal
 from typing import Any
 
 from pydantic import model_validator
@@ -24,75 +25,75 @@ class StopAndSearch(SQLModel, table=True):
 
     id: int | None = Field(
         default=None,
-        sa_column=Column("Id", primary_key=True, nullable=False, type_=INTEGER),
+        sa_column=Column(
+            "Id",
+            INTEGER,
+            primary_key=True,
+            nullable=False,
+        ),
     )
     force_id: str | None = Field(
         default=None,
         sa_column=Column(
-            "ForceId", ForeignKey("bronze.Force.Id"), nullable=False, type_=String(20)
+            "ForceId", String(20), ForeignKey("bronze.Force.Id"), nullable=False
         ),
     )
-    type: str = Field(
-        sa_column=Column("Type", nullable=False, unique=True, type_=String)
-    )
+    type: str = Field(sa_column=Column("Type", String, nullable=False))
     involved_person: bool = Field(
-        sa_column=Column("InvolvedPerson", nullable=False, type_=BOOLEAN)
+        sa_column=Column("InvolvedPerson", BOOLEAN, nullable=False)
     )
     datetime: datetime_type = Field(
-        sa_column=Column("Datetime", nullable=False, type_=DateTime(timezone=True))
+        sa_column=Column("Datetime", DateTime(timezone=True), nullable=False)
     )
     operation: bool | None = Field(
-        default=None, sa_column=Column("Operation", nullable=True, type_=BOOLEAN)
+        default=None, sa_column=Column("Operation", BOOLEAN, nullable=True)
     )
     operation_name: str | None = Field(
-        default=None, sa_column=Column("OperationName", nullable=True, type_=String)
+        default=None, sa_column=Column("OperationName", String, nullable=True)
     )
-    latitude: float | None = Field(
-        default=None, sa_column=Column("Latitude", nullable=True, type_=DECIMAL(9, 6))
+    latitude: Decimal | None = Field(
+        default=None, sa_column=Column("Latitude", DECIMAL(9, 6), nullable=True)
     )
-    longitude: float | None = Field(
-        default=None, sa_column=Column("Longitude", nullable=True, type_=DECIMAL(9, 6))
+    longitude: Decimal | None = Field(
+        default=None, sa_column=Column("Longitude", DECIMAL(9, 6), nullable=True)
     )
     street_id: int | None = Field(
-        default=None, sa_column=Column("StreetId", nullable=True, type_=INTEGER)
+        default=None, sa_column=Column("StreetId", INTEGER, nullable=True)
     )
     street_name: str | None = Field(
-        default=None, sa_column=Column("StreetName", nullable=True, type_=String)
+        default=None, sa_column=Column("StreetName", String, nullable=True)
     )
     gender: str | None = Field(
-        default=None, sa_column=Column("Gender", nullable=True, type_=String)
+        default=None, sa_column=Column("Gender", String, nullable=True)
     )
     age_range: str | None = Field(
-        default=None, sa_column=Column("AgeRange", nullable=True, type_=String)
+        default=None, sa_column=Column("AgeRange", String, nullable=True)
     )
-    self_defined_ethnicity: str = Field(
-        sa_column=Column("SelfDefinedEthnicity", nullable=False, type_=String)
+    self_defined_ethnicity: str | None = Field(
+        default=None, sa_column=Column("SelfDefinedEthnicity", String, nullable=True)
     )
     officer_defined_ethnicity: str | None = Field(
-        default=None,
-        sa_column=Column("OfficerDefinedEthnicity", nullable=True, type_=String),
+        default=None, sa_column=Column("OfficerDefinedEthnicity", String, nullable=True)
     )
     legislation: str | None = Field(
-        default=None, sa_column=Column("Legislation", nullable=True, type_=String)
+        default=None, sa_column=Column("Legislation", String, nullable=True)
     )
     object_of_search: str | None = Field(
-        default=None, sa_column=Column("ObjectOfSearch", nullable=True, type_=String)
+        default=None, sa_column=Column("ObjectOfSearch", String, nullable=True)
     )
     outcome_name: str = Field(
-        sa_column=Column("OutcomeName", nullable=False, type_=String),
+        sa_column=Column("OutcomeName", String, nullable=False),
     )
     outcome_id: str = Field(
-        sa_column=Column("OutcomeId", nullable=False, type_=String),
+        sa_column=Column("OutcomeId", String, nullable=False),
     )
     outcome_linked_to_object_of_search: bool | None = Field(
         default=None,
-        sa_column=Column("OutcomeLinkedToObjectOfSearch", nullable=True, type_=BOOLEAN),
+        sa_column=Column("OutcomeLinkedToObjectOfSearch", BOOLEAN, nullable=True),
     )
     removal_of_more_than_outer_clothing: bool | None = Field(
         default=None,
-        sa_column=Column(
-            "RemovalOfMoreThanOuterClothing", nullable=True, type_=BOOLEAN
-        ),
+        sa_column=Column("RemovalOfMoreThanOuterClothing", BOOLEAN, nullable=True),
     )
 
     force: Force = Relationship(back_populates="stop_and_searches")

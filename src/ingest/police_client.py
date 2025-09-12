@@ -58,6 +58,8 @@ class PoliceClient(AsyncClient):
             f"location from Police API for force with id '{force_id}' on date '{date}'"
         )
         stop_and_searches = await self._get_response_body(endpoint, error_message)
+        for stop_and_search in stop_and_searches:
+            stop_and_search["force_id"] = force_id
         return self._map_vailidate_models(StopAndSearch, stop_and_searches)
 
     async def _get_response_body(self, endpoint: str, error_message: str) -> list[dict]:
