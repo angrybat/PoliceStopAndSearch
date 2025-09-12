@@ -4,8 +4,8 @@ from datetime import datetime
 from sqlalchemy import Engine
 from sqlmodel import Session
 
-from src.ingest.force_repository import ForceRepository
 from src.ingest.police_client import PoliceClient
+from src.ingest.repositories.force_repository import ForceRepository
 from src.models.bronze.available_date import AvailableDate
 from src.models.bronze.available_date_force_mapping import AvailableDateForceMapping
 from src.models.bronze.force import Force
