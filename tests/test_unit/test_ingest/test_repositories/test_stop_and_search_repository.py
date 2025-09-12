@@ -340,7 +340,7 @@ class TestStopAndSearch:
             record.message
             == "Cannot store StopAndSearches in the database for 'force-one' on date '2023-01'."
         )
-        assert record.levelname == "ERROR"
+        assert record.levelname == "WARNING"
 
 
 def get_mock_stop_and_search(datetime: datetime) -> StopAndSearch:

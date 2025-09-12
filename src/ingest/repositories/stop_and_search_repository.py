@@ -83,9 +83,10 @@ class StopAndSearchRepository:
             try:
                 session.add_all(filtered_stop_and_searches)
                 session.commit()
-            except SQLAlchemyError:
-                self.logger.exception(
-                    f"Cannot store StopAndSearches in the database for '{force_id}' on date '{date}'."
+            except SQLAlchemyError as error:
+                self.logger.warning(
+                    f"Cannot store StopAndSearches in the database for '{force_id}' on date '{date}'.",
+                    exc_info=error,
                 )
                 return False
         return True
