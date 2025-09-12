@@ -27,14 +27,14 @@ class AvailableDateRepository:
         if forces is None:
             return False
 
-        available_date_force_ids = set(
-            [force_id for date in available_dates for force_id in date.force_ids]
+        missing_forces = set(
+            [
+                Force(id=force_id)
+                for date in available_dates
+                for force_id in date.force_ids
+                if force_id not in forces
+            ]
         )
-        missing_forces = [
-            Force(id=force_id)
-            for force_id in available_date_force_ids
-            if force_id not in forces
-        ]
         with Session(self.engine) as session:
             session.add_all(missing_forces)
             session.commit()

@@ -31,3 +31,6 @@ class Force(SQLModel, table=True):
         if isinstance(other, str):
             return other == self.id
         return False
+
+    def __hash__(self):
+        return hash(self.id)
