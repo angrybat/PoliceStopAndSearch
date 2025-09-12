@@ -58,4 +58,9 @@ class AvailableDateWithForceIds(SQLModel):
             return other.year_month == self.year_month and set(self.force_ids) == set(
                 force.id for force in other.forces
             )
+        if isinstance(other, AvailableDateWithForceIds):
+            return (
+                other.year_month == self.year_month
+                and self.force_ids == other.force_ids
+            )
         return False

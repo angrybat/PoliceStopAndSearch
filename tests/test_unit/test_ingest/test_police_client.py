@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from decimal import Decimal
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -6,7 +7,7 @@ from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 
 from src.ingest.police_client import BASE_URL, PoliceClient
-from src.models.bronze.available_date import AvailableDate
+from src.models.bronze.available_date import AvailableDateWithForceIds
 from src.models.bronze.force import Force
 from src.models.bronze.stop_and_search import StopAndSearch
 
@@ -97,11 +98,17 @@ class TestGetAvailableDates:
         mock_get = AsyncMock(return_value=mock_response)
         police_client.get = mock_get
 
-        available_dates = await police_client.get_available_dates()
+        available_dates = await police_client.get_available_dates(
+            datetime(2022, 6, 1), datetime(2023, 8, 1)
+        )
 
         assert available_dates == [
-            AvailableDate(id=None, year_month="2022-07"),
-            AvailableDate(id=None, year_month="2023-07"),
+            AvailableDateWithForceIds(
+                **{"date": "2022-07", "stop-and-search": ["force-one", "force-two"]}
+            ),
+            AvailableDateWithForceIds(
+                **{"date": "2023-07", "stop-and-search": ["force-one", "force-two"]},
+            ),
         ]
         mock_get.assert_called_once_with("crimes-street-dates")
 
@@ -117,7 +124,9 @@ class TestGetAvailableDates:
         police_client.get = mock_get
 
         with pytest.raises(HTTPStatusError):
-            await police_client.get_available_dates()
+            await police_client.get_available_dates(
+                datetime(2022, 6, 1), datetime(2023, 8, 1)
+            )
 
         record = caplog.records[-1]
         assert record.levelname == "ERROR"
@@ -135,13 +144,19 @@ class TestGetAvailableDates:
         mock_get = AsyncMock(return_value=mock_response)
         police_client.get = mock_get
 
-        available_dates = await police_client.get_available_dates()
+        available_dates = await police_client.get_available_dates(
+            datetime(2022, 6, 1), datetime(2023, 8, 1)
+        )
 
-        assert available_dates == [AvailableDate(id=None, year_month="2023-07")]
+        assert available_dates == [
+            AvailableDateWithForceIds(
+                **{"date": "2023-07", "stop-and-search": ["force-one", "force-two"]}
+            )
+        ]
         record = caplog.records[-1]
         assert record.levelname == "ERROR"
         assert (
-            "Failed to map 'AvailableDate' at index '0' returned from Police API"
+            "Failed to map 'AvailableDateWithForceIds' at index '0' returned from Police API"
             in record.message
         )
 
@@ -224,7 +239,7 @@ class TestGetStopAndSearches:
         assert stop_and_searches == [
             StopAndSearch(
                 id=None,
-                force_id=None,
+                force_id="leicestershire",
                 age_range="10-17",
                 involved_person=True,
                 self_defined_ethnicity="Other ethnic group - Not stated",
@@ -235,10 +250,10 @@ class TestGetStopAndSearches:
                 removal_of_more_than_outer_clothing=False,
                 outcome_id="bu-no-further-action",
                 outcome_name="A no further action disposal",
-                latitude=None if not with_location else 52.645734,
+                latitude=None if not with_location else Decimal("52.645734"),
                 street_id=None if not with_location else 1735297,
                 street_name=None if not with_location else "On or near Harrison Close",
-                longitude=None if not with_location else -1.201507,
+                longitude=None if not with_location else Decimal("-1.201507"),
                 operation=None,
                 officer_defined_ethnicity="White",
                 type="Person search",
@@ -247,7 +262,7 @@ class TestGetStopAndSearches:
             ),
             StopAndSearch(
                 id=None,
-                force_id=None,
+                force_id="leicestershire",
                 age_range="18-24",
                 involved_person=True,
                 self_defined_ethnicity="White - English/Welsh/Scottish/Northern Irish/British",
@@ -258,12 +273,12 @@ class TestGetStopAndSearches:
                 removal_of_more_than_outer_clothing=False,
                 outcome_id="bu-arrest",
                 outcome_name="Arrest",
-                latitude=None if not with_location else 52.732829,
+                latitude=None if not with_location else Decimal("52.732829"),
                 street_id=None if not with_location else 1740099,
                 street_name=None
                 if not with_location
                 else "On or near St Gregory'S Drive",
-                longitude=None if not with_location else -1.098693,
+                longitude=None if not with_location else Decimal("-1.098693"),
                 operation=None,
                 officer_defined_ethnicity="White",
                 type="Person search",

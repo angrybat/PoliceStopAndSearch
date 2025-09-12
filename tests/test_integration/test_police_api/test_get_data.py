@@ -1,34 +1,37 @@
+from datetime import UTC, datetime
+
 import pytest
 
 from src.ingest.police_client import (
     PoliceClient,
 )
-from src.models.bronze.available_date import AvailableDate
+from src.models.bronze.available_date import AvailableDateWithForceIds
 from src.models.bronze.force import Force
 from src.models.bronze.stop_and_search import StopAndSearch
 
 
 class TestGetForces:
     @pytest.mark.asyncio
-    async def test_get_forces(self, expected_forces: list[Force]):
+    async def test_get_forces(self, expected_forces_without_btp: list[Force]):
         police_client = PoliceClient()
 
         forces = await police_client.get_forces()
 
-        assert forces == expected_forces
+        assert forces == expected_forces_without_btp
 
 
 class TestGetAvailableDates:
     @pytest.mark.asyncio
     async def test_get_available_dates(
-        self, expected_available_dates: list[AvailableDate]
+        self, expected_available_dates: list[AvailableDateWithForceIds]
     ):
         police_client = PoliceClient()
 
-        available_dates = await police_client.get_available_dates()
+        available_dates = await police_client.get_available_dates(
+            datetime(2023, 4, 1, tzinfo=UTC), datetime(2023, 6, 1, tzinfo=UTC)
+        )
 
-        for expected_date in expected_available_dates:
-            assert expected_date in available_dates
+        assert available_dates == expected_available_dates
 
 
 class TestGetStopAndSearches:
