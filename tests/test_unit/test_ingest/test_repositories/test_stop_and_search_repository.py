@@ -18,16 +18,6 @@ from src.models.bronze.stop_and_search import StopAndSearch
 
 
 @pytest.fixture
-def mock_police_client() -> PoliceClient:
-    return Mock(spec=PoliceClient)
-
-
-@pytest.fixture
-def mock_engine() -> Engine:
-    return Mock(spec=Engine)
-
-
-@pytest.fixture
 def mock_session() -> Generator[Session, None, None]:
     with patch.object(
         Session, "__enter__", new_callable=Mock(spec=Session)
