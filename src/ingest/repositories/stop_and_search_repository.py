@@ -1,7 +1,10 @@
 from asyncio import gather
 from datetime import datetime
+from logging import Logger, getLogger
 
+from httpx import HTTPStatusError
 from sqlalchemy import Engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, and_, select
 
@@ -10,28 +13,39 @@ from src.models.bronze.available_date import AvailableDate
 
 
 class StopAndSearchRepository:
-    def __init__(self, engine: Engine, police_client: PoliceClient):
+    def __init__(
+        self, engine: Engine, police_client: PoliceClient, logger: Logger | None = None
+    ):
         self.engine = engine
         self.police_client = police_client
+        self.logger = logger or getLogger("StopAndSearchRepository")
 
     async def store_stop_and_searches(
         self, from_datetime: datetime, to_datetime: datetime
-    ) -> None:
+    ) -> bool:
         with Session(self.engine) as session:
-            available_dates = (
-                session.exec(
-                    select(AvailableDate)
-                    .where(
-                        and_(
-                            from_datetime.strftime("%Y-%m") <= AvailableDate.year_month,
-                            AvailableDate.year_month <= to_datetime.strftime("%Y-%m"),
+            try:
+                available_dates = (
+                    session.exec(
+                        select(AvailableDate)
+                        .where(
+                            and_(
+                                from_datetime.strftime("%Y-%m")
+                                <= AvailableDate.year_month,
+                                AvailableDate.year_month
+                                <= to_datetime.strftime("%Y-%m"),
+                            )
                         )
+                        .options(joinedload(AvailableDate.forces))  # type: ignore
                     )
-                    .options(joinedload(AvailableDate.forces))  # type: ignore
+                    .unique()
+                    .all()
                 )
-                .unique()
-                .all()
-            )
+            except SQLAlchemyError:
+                self.logger.exception(
+                    "Cannot retreive AvailableDates from the database."
+                )
+                return False
 
         store_stop_and_searches = [
             self.store_stop_and_search(
@@ -40,19 +54,23 @@ class StopAndSearchRepository:
             for available_date in available_dates
             for force in available_date.forces
         ]
-        await gather(*store_stop_and_searches)
+        results = await gather(*store_stop_and_searches)
+        return all(results)
 
     async def store_stop_and_search(
         self, date: str, force_id: str, from_datetime: datetime, to_datetime: datetime
-    ) -> None:
-        with_location, without_location = await gather(
-            self.police_client.get_stop_and_searches(
-                date, force_id, with_location=True
-            ),
-            self.police_client.get_stop_and_searches(
-                date, force_id, with_location=False
-            ),
-        )
+    ) -> bool:
+        try:
+            with_location, without_location = await gather(
+                self.police_client.get_stop_and_searches(
+                    date, force_id, with_location=True
+                ),
+                self.police_client.get_stop_and_searches(
+                    date, force_id, with_location=False
+                ),
+            )
+        except HTTPStatusError:
+            return False
         stop_and_searches = [
             stop_and_search
             for stop_and_search in with_location + without_location
@@ -60,5 +78,12 @@ class StopAndSearchRepository:
             and stop_and_search.datetime <= to_datetime
         ]
         with Session(self.engine) as session:
-            session.add_all(stop_and_searches)
-            session.commit()
+            try:
+                session.add_all(stop_and_searches)
+                session.commit()
+            except SQLAlchemyError:
+                self.logger.exception(
+                    f"Cannot store StopAndSearches in the database for '{force_id}' on date '{date}'."
+                )
+                return False
+        return True
