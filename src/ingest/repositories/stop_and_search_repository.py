@@ -71,12 +71,14 @@ class StopAndSearchRepository:
             )
         except HTTPStatusError:
             return False
+
         stop_and_searches = [
             stop_and_search
             for stop_and_search in with_location + without_location
             if from_datetime <= stop_and_search.datetime
             and stop_and_search.datetime <= to_datetime
         ]
+
         with Session(self.engine) as session:
             try:
                 session.add_all(stop_and_searches)
