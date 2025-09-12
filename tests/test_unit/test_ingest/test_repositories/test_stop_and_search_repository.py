@@ -1,3 +1,4 @@
+from collections.abc import Generator
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, call, patch
 
@@ -27,18 +28,27 @@ def mock_engine() -> Engine:
 
 
 @pytest.fixture
+def mock_session() -> Generator[Session, None, None]:
+    with patch.object(
+        Session, "__enter__", new_callable=Mock(spec=Session)
+    ) as mock_session_enter:
+        mock_session = Mock()
+        mock_session_enter.return_value = mock_session
+        yield mock_session
+
+
+@pytest.fixture
 def stop_and_search_repository(
     mock_police_client: PoliceClient, mock_engine: Engine
 ) -> StopAndSearchRepository:
     return StopAndSearchRepository(mock_engine, mock_police_client)
 
 
-@patch.object(Session, "__enter__", new_callable=Mock(spec=Session))
 class TestStoreStopAndSearches:
     @pytest.mark.asyncio
     async def test_makes_correct_store_stop_and_search_calls(
         self,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
     ):
         available_dates = [
@@ -59,11 +69,9 @@ class TestStoreStopAndSearches:
                 ],
             ),
         ]
-        mock_session = Mock()
         mock_session.exec.return_value.unique.return_value.all = Mock(
             return_value=available_dates
         )
-        mock_session_enter.return_value = mock_session
         stop_and_search_repository.store_stop_and_search = AsyncMock()
         stop_and_search_repository.store_stop_and_search.side_effect = [
             True,
@@ -96,7 +104,7 @@ class TestStoreStopAndSearches:
     @pytest.mark.asyncio
     async def test_returns_false_if_a_stop_and_search_calls_fails(
         self,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
     ):
         available_dates = [
@@ -117,11 +125,9 @@ class TestStoreStopAndSearches:
                 ],
             ),
         ]
-        mock_session = Mock()
         mock_session.exec.return_value.unique.return_value.all = Mock(
             return_value=available_dates
         )
-        mock_session_enter.return_value = mock_session
         stop_and_search_repository.store_stop_and_search = AsyncMock()
         stop_and_search_repository.store_stop_and_search.side_effect = [
             True,
@@ -147,7 +153,7 @@ class TestStoreStopAndSearches:
         self,
         mock_select: Mock,
         mock_joinedload: Mock,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
     ):
         available_dates = [
@@ -168,11 +174,9 @@ class TestStoreStopAndSearches:
                 ],
             ),
         ]
-        mock_session = Mock()
         mock_session.exec.return_value.unique.return_value.all = Mock(
             return_value=available_dates
         )
-        mock_session_enter.return_value = mock_session
         stop_and_search_repository.store_stop_and_search = AsyncMock()
         from_datetime = datetime(2023, 1, 1, 1, 0, 0)
         to_datetime = datetime(2023, 2, 1, 3, 45, 0)
@@ -200,13 +204,11 @@ class TestStoreStopAndSearches:
     @pytest.mark.asyncio
     async def test_logs_error_when_cannot_retrieve_available_dates(
         self,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
         caplog: pytest.LogCaptureFixture,
     ):
-        mock_session = Mock()
         mock_session.exec.side_effect = SQLAlchemyError("database says no!")
-        mock_session_enter.return_value = mock_session
         from_datetime = datetime(2023, 1, 1, 1, 0, 0)
         to_datetime = datetime(2023, 2, 1, 3, 45, 0)
 
@@ -220,12 +222,11 @@ class TestStoreStopAndSearches:
         assert record.levelname == "ERROR"
 
 
-@patch.object(Session, "__enter__", new_callable=Mock(spec=Session))
 class TestStopAndSearch:
     @pytest.mark.asyncio
     async def test_stop_and_searches_added_to_session_and_commited(
         self,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
         mock_police_client: PoliceClient,
     ):
@@ -239,8 +240,6 @@ class TestStopAndSearch:
             get_mock_stop_and_search(datetime(2023, 1, 5)),
             get_mock_stop_and_search(datetime(2023, 1, 6)),
         ]
-        mock_session = Mock()
-        mock_session_enter.return_value = mock_session
         mock_police_client.get_stop_and_searches.side_effect = [
             stop_and_searches_with_location,
             stop_and_searches_without_location,
@@ -262,7 +261,7 @@ class TestStopAndSearch:
     @pytest.mark.asyncio
     async def test_police_client_stop_and_searches_called_correctly(
         self,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
         mock_police_client: PoliceClient,
     ):
@@ -276,8 +275,6 @@ class TestStopAndSearch:
             get_mock_stop_and_search(datetime(2023, 1, 5)),
             get_mock_stop_and_search(datetime(2023, 1, 6)),
         ]
-        mock_session = Mock()
-        mock_session_enter.return_value = mock_session
         mock_police_client.get_stop_and_searches.side_effect = [
             stop_and_searches_with_location,
             stop_and_searches_without_location,
@@ -301,12 +298,10 @@ class TestStopAndSearch:
     @pytest.mark.asyncio
     async def test_return_falses_if_police_client_has_http_status_error(
         self,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
         mock_police_client: PoliceClient,
     ):
-        mock_session = Mock()
-        mock_session_enter.return_value = mock_session
         mock_police_client.get_stop_and_searches.side_effect = HTTPStatusError(
             "cannot contact the police", request=Mock(), response=Mock()
         )
@@ -322,7 +317,7 @@ class TestStopAndSearch:
     @pytest.mark.asyncio
     async def test_logs_error_if_cannot_store_stop_and_searches(
         self,
-        mock_session_enter: Mock,
+        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
         mock_police_client: PoliceClient,
         caplog: LogCaptureFixture,
@@ -337,8 +332,6 @@ class TestStopAndSearch:
             get_mock_stop_and_search(datetime(2023, 1, 5)),
             get_mock_stop_and_search(datetime(2023, 1, 6)),
         ]
-        mock_session = Mock()
-        mock_session_enter.return_value = mock_session
         mock_police_client.get_stop_and_searches.side_effect = [
             stop_and_searches_with_location,
             stop_and_searches_without_location,
