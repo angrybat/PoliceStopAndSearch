@@ -56,6 +56,16 @@ def expected_stop_and_searches_without_location(
     ]
 
 
+@pytest.fixture
+def expected_stop_and_searches(test_data_directory: Path) -> list[StopAndSearch]:
+    return [
+        StopAndSearch.model_validate(stop_and_search)
+        for stop_and_search in get_json_from_file(
+            test_data_directory, "stop_and_searches_2024-01.json"
+        )
+    ]
+
+
 def get_json_from_file(
     test_data_directory: Path, file_name: str
 ) -> list[dict[str, Any]]:
