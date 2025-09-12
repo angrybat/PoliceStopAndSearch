@@ -1,6 +1,14 @@
 from typing import Annotated
 
-from dagger import Container, Directory, Doc, dag, function, object_type
+from dagger import (
+    CacheSharingMode,
+    Container,
+    Directory,
+    Doc,
+    dag,
+    function,
+    object_type,
+)
 
 POSTGRES_TAG_DOC = Doc("Tag of the postgres image")
 PYTHON_TAG_DOC = Doc("Tag of the python image")
@@ -39,7 +47,10 @@ class PoliceStopAndSearch:
         )
         if cache_volume_name is not None:
             return container.with_mounted_cache(
-                "/var/lib/postgresql/data", dag.cache_volume(cache_volume_name)
+                "/var/lib/postgresql/data",
+                dag.cache_volume(cache_volume_name),
+                owner=username,
+                sharing=CacheSharingMode.LOCKED,
             )
         return container
 
@@ -100,6 +111,7 @@ class PoliceStopAndSearch:
             postgres_tag, username, password, database_name, "bronze_db_data"
         )
         postgres_service = postgres_container.as_service(use_entrypoint=True)
+        await postgres_service.start()
         await (
             development_container.with_service_binding("postgres", postgres_service)
             .with_env_variable(
@@ -112,6 +124,7 @@ class PoliceStopAndSearch:
             .with_exec(["alembic", "upgrade", "fb1ef6ecc640"])
             .sync()
         )
+        await postgres_service.stop()
         return postgres_container
 
     def install_requirements(
