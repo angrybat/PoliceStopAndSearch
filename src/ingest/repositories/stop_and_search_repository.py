@@ -47,14 +47,15 @@ class StopAndSearchRepository:
                 )
                 return False
 
-        store_stop_and_searches = [
-            self.store_stop_and_search(
-                available_date.year_month, force.id, from_datetime, to_datetime
-            )
-            for available_date in available_dates
-            for force in available_date.forces
-        ]
-        results = await gather(*store_stop_and_searches)
+        results = await gather(
+            *[
+                self.store_stop_and_search(
+                    available_date.year_month, force.id, from_datetime, to_datetime
+                )
+                for available_date in available_dates
+                for force in available_date.forces
+            ]
+        )
         return all(results)
 
     async def store_stop_and_search(

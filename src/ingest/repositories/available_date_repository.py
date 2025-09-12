@@ -39,16 +39,17 @@ class AvailableDateRepository:
             session.add_all(missing_forces)
             session.commit()
 
-        store_available_dates = [
-            self.store_available_date(available_date)
-            for available_date in available_dates
-        ]
-        await gather(*store_available_dates)
+        await gather(
+            *[
+                self.store_available_date(available_date)
+                for available_date in available_dates
+            ]
+        )
         return True
 
     async def store_available_date(
         self, available_date_with_force_ids: AvailableDateWithForceIds
-    ):
+    ) -> None:
         with Session(self.engine) as session:
             available_date = AvailableDate(
                 year_month=available_date_with_force_ids.year_month
