@@ -37,7 +37,12 @@ class AvailableDate(SQLModel, table=True):
             return other.year_month == self.year_month and set(other.force_ids) == set(
                 force.id for force in self.forces
             )
+        if isinstance(other, AvailableDate):
+            return other.year_month == self.year_month
         return False
+
+    def __str__(self):
+        return self.year_month
 
 
 # SQLModel does not support fields that are not database columns
