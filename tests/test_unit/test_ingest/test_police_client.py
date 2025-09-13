@@ -1,6 +1,7 @@
 from asyncio import gather
 from datetime import UTC, datetime
 from decimal import Decimal
+from http import HTTPStatus
 from time import monotonic
 from unittest.mock import AsyncMock, Mock, call, patch
 
@@ -486,6 +487,40 @@ class TestRateLimitedGet:
             == "The rate limit on the API has been exceeded. The max limit of retires '3' has been exceeded, giving up."
         )
 
+    @pytest.mark.asyncio
+    async def test_logs_warning_if_retrying(self, caplog: LogCaptureFixture):
+        police_client = PoliceClient(max_request_retries=3)
+        mock_get = AsyncMock()
+        police_client.get = mock_get
+        mock_too_many_request_response = Mock()
+        mock_success_response = Mock()
+        mock_success_response.status_code = 200
+        mock_too_many_request_response.status_code = HTTPStatus.TOO_MANY_REQUESTS
+        mock_too_many_request_response.raise_for_status.side_effect = [
+            HTTPStatusError("rate limit exceeded!", request=Mock(), response=Mock())
+        ]
+        mock_get.side_effect = [mock_too_many_request_response, mock_success_response]
+        route = "test_route"
+
+        response = await police_client.rate_limited_get(route)
+
+        assert response is mock_success_response
+        mock_get.assert_has_awaits(
+            [
+                call(route),
+                call(route),
+            ]
+        )
+        record = caplog.records[-1]
+        assert record.levelname == "WARNING"
+        assert (
+            record.message
+            == "The rate limit on the API has been exceeded. Currently at attempt '1' of '3'. Retrying..."
+        )
+
 
 def record_call_time(call_log: list[float]):
     call_log.append(monotonic())
+    mock_success_response = Mock()
+    mock_success_response.status_code = 200
+    return mock_success_response
