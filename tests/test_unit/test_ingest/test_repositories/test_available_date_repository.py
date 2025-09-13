@@ -1,11 +1,12 @@
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, call
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.operators import ge, le
 from sqlmodel import Session
 
 from src.ingest.police_client import PoliceClient
@@ -403,6 +404,75 @@ def set_id(date: AvailableDate):
         date.id = 1
 
 
-# class GetAvailableDates:
-#     @pytest.mark.asyncio
-#     async def test_creates_correct_query_is_created_correctly(self, mock_session: Session, available_date_repository: AvailableDateRepository):
+class TestGetAvailableDates:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "with_forces", [True, False], ids=["with_forces=True", "with_forces=False"]
+    )
+    @patch("src.ingest.repositories.available_date_repository.joinedload")
+    @patch("src.ingest.repositories.available_date_repository.and_")
+    @patch("src.ingest.repositories.available_date_repository.select")
+    async def test_creates_correct_query_and_returns_correct_dates(
+        self,
+        mock_select: Mock,
+        mock_and_: Mock,
+        mock_joinedload: Mock,
+        with_forces: bool,
+        mock_session: Session,
+        available_date_repository: AvailableDateRepository,
+    ):
+        mock_available_dates = [Mock(), Mock(), Mock()]
+        mock_session.exec.return_value.unique.return_value.all.return_value = (
+            mock_available_dates
+        )
+        mock_options = Mock()
+        mock_where = Mock()
+        mock_select.return_value.where = mock_where
+        mock_where.return_value.options = mock_options
+        from_date = datetime(2023, 1, 1)
+        to_date = datetime(2023, 4, 1)
+
+        available_dates = await available_date_repository.get_available_dates(
+            from_date, to_date, with_forces=with_forces
+        )
+
+        assert available_dates == mock_available_dates
+        mock_select.assert_called_once_with(AvailableDate)
+        mock_where.assert_called_once_with(mock_and_.return_value)
+        from_clause, to_clause = mock_and_.call_args_list[0][0]
+        mock_and_.assert_called_once_with(from_clause, to_clause)
+        assert from_clause.left == AvailableDate.year_month
+        assert from_clause.right.value == "2023-01"
+        assert from_clause.operator == ge
+        assert to_clause.right.value == "2023-04"
+        assert to_clause.left == AvailableDate.year_month
+        assert to_clause.operator == le
+        if with_forces:
+            mock_options.assert_called_once_with(mock_joinedload.return_value)
+            mock_joinedload.assert_called_once_with(AvailableDate.forces)
+        else:
+            mock_options.assert_not_called()
+            mock_joinedload.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_logs_error_when_cannot_get_dates(
+        self,
+        mock_session: Session,
+        available_date_repository: AvailableDateRepository,
+        caplog: LogCaptureFixture,
+    ):
+        mock_session.exec.side_effect = SQLAlchemyError("Database says no!")
+        from_date = datetime(2023, 1, 1)
+        to_date = datetime(2023, 4, 1)
+
+        available_dates = await available_date_repository.get_available_dates(
+            from_date, to_date, with_forces=True
+        )
+
+        assert available_dates is None
+        record = caplog.records[-1]
+        assert record.levelname == "ERROR"
+        assert (
+            record.message == "Could not retrieve AvailableDates from the "
+            "database between '2023-01' to '2023-04'."
+        )
