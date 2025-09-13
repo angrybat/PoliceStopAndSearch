@@ -1,4 +1,5 @@
 from datetime import datetime
+from http import HTTPStatus
 from logging import Logger, getLogger
 from typing import TypeVar
 
@@ -74,8 +75,24 @@ class PoliceClient(AsyncClient):
         return self._map_vailidate_models(StopAndSearch, stop_and_searches)
 
     async def rate_limited_get(self, route: str) -> Response:
-        async with self.limiter:
-            return await self.get(route)
+        retries = 0
+        while retries < self.max_request_retries:
+            async with self.limiter:
+                response = await self.get(route)
+            if response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
+                return response
+            retries += 1
+            self.logger.warning(
+                "The rate limit on the API has been exceeded. "
+                f"Currently at attempt '{retries}' of '{self.max_request_retries}'."
+                " Retrying..."
+            )
+        self.logger.exception(
+            "The rate limit on the API has been exceeded. The max limit of retires "
+            f"'{self.max_request_retries}' has been exceeded, giving up."
+        )
+        response.raise_for_status()
+        return response
 
     async def _get_response_body(self, route: str, error_message: str) -> list[dict]:
         response = await self.rate_limited_get(route)
