@@ -6,3 +6,4 @@ dagger completion bash > /home/vscode/.local/share/bash-completion/completions/d
 pip install --upgrade pip==25.2
 pip install .[dev]
 pip install -e .
+export DATABASE_URL="postgresql+psycopg2://postgres:password@localhost/postgres"
