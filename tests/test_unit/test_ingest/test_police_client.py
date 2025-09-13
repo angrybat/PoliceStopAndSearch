@@ -1,12 +1,14 @@
+from asyncio import gather
 from datetime import UTC, datetime
 from decimal import Decimal
+from time import monotonic
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 
-from src.ingest.police_client import BASE_URL, PoliceClient
+from src.ingest.police_client import BASE_URL, ONE_SECOND, PoliceClient
 from src.models.bronze.available_date import AvailableDateWithForceIds
 from src.models.bronze.force import Force
 from src.models.bronze.stop_and_search import StopAndSearch
@@ -15,11 +17,14 @@ from src.models.bronze.stop_and_search import StopAndSearch
 class TestInit:
     def test_initializes_with_default_base_url(self):
         police_client = PoliceClient()
+
         assert police_client.base_url == BASE_URL
 
     def test_initializes_with_custom_base_url(self):
         custom_url = "https://custom.police.api/"
+
         police_client = PoliceClient(base_url=custom_url)
+
         assert police_client.base_url == custom_url
 
 
@@ -409,3 +414,48 @@ class TestGetStopAndSearches:
             "Failed to map 'StopAndSearch' at index '0' returned from Police API"
             in record.message
         )
+
+
+class TestRateLimitedGet:
+    @pytest.mark.asyncio
+    async def test_get_method_is_called_correctly_and_response_returned(self):
+        police_client = PoliceClient()
+        mock_response = Mock()
+        mock_get = AsyncMock(return_value=mock_response)
+        police_client.get = mock_get
+        route = "test_route"
+
+        response = await police_client.rate_limited_get(route)
+
+        mock_get.assert_called_once_with(route)
+        assert response is mock_response
+
+    @pytest.mark.asyncio
+    async def test_requests_are_limited(self):
+        calls_log = []
+        requests_per_second = 5
+        police_client = PoliceClient(max_requests_per_second=requests_per_second)
+        mock_get = AsyncMock()
+        police_client.get = mock_get
+        mock_get.side_effect = lambda _: record_call_time(calls_log)
+        calls = [police_client.rate_limited_get(f"test_route/{i}") for i in range(20)]
+
+        await gather(*calls)
+
+        calls_log.sort()
+        for i in range(len(calls_log)):
+            window_start = calls_log[i]
+            count_in_window = sum(
+                ONE_SECOND
+                for time in calls_log
+                if window_start <= time < window_start + 1
+            )
+            # Doubled requests per second because the API
+            # can support twice the amount of requests in its bucket.
+            assert count_in_window <= requests_per_second * 2, (
+                f"Too many calls in 1 second: {count_in_window}"
+            )
+
+
+def record_call_time(call_log: list[float]):
+    call_log.append(monotonic())
