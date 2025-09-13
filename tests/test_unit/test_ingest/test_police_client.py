@@ -2,13 +2,13 @@ from asyncio import gather
 from datetime import UTC, datetime
 from decimal import Decimal
 from time import monotonic
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, call, patch
 
 import pytest
 from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 
-from src.ingest.police_client import BASE_URL, ONE_SECOND, PoliceClient
+from src.ingest.police_client import BASE_URL, PoliceClient
 from src.models.bronze.available_date import AvailableDateWithForceIds
 from src.models.bronze.force import Force
 from src.models.bronze.stop_and_search import StopAndSearch
@@ -431,14 +431,16 @@ class TestRateLimitedGet:
         assert response is mock_response
 
     @pytest.mark.asyncio
-    async def test_requests_are_limited(self):
+    # Set 1 second to 0.01 seconds to speed up the test
+    @patch("src.ingest.police_client.ONE_SECOND", new_callable=lambda: 0.01)
+    async def test_requests_are_limited(self, _):
         calls_log = []
         requests_per_second = 5
         police_client = PoliceClient(max_requests_per_second=requests_per_second)
         mock_get = AsyncMock()
         police_client.get = mock_get
         mock_get.side_effect = lambda _: record_call_time(calls_log)
-        calls = [police_client.rate_limited_get(f"test_route/{i}") for i in range(20)]
+        calls = [police_client.rate_limited_get(f"test_route/{i}") for i in range(50)]
 
         await gather(*calls)
 
@@ -446,15 +448,45 @@ class TestRateLimitedGet:
         for i in range(len(calls_log)):
             window_start = calls_log[i]
             count_in_window = sum(
-                ONE_SECOND
-                for time in calls_log
-                if window_start <= time < window_start + 1
+                1 for time in calls_log if window_start <= time < window_start + 0.01
             )
             # Doubled requests per second because the API
             # can support twice the amount of requests in its bucket.
             assert count_in_window <= requests_per_second * 2, (
                 f"Too many calls in 1 second: {count_in_window}"
             )
+
+    @pytest.mark.asyncio
+    async def test_requeues_requests_if_429_till_reach_max_requests_then_log_error(
+        self, caplog: LogCaptureFixture
+    ):
+        police_client = PoliceClient(max_request_retries=3)
+        mock_get = AsyncMock()
+        police_client.get = mock_get
+        mock_too_many_request_response = Mock()
+        mock_too_many_request_response.status_code = 429
+        mock_too_many_request_response.raise_for_status.side_effect = HTTPStatusError(
+            "rate limit exceeded!", request=Mock(), response=Mock()
+        )
+        mock_get.return_value = mock_too_many_request_response
+        route = "test_route"
+
+        with pytest.raises(HTTPStatusError):
+            await police_client.rate_limited_get(route)
+
+        mock_get.assert_has_awaits(
+            [
+                call(route),
+                call(route),
+                call(route),
+            ]
+        )
+        record = caplog.records[-1]
+        assert record.levelname == "ERROR"
+        assert (
+            record.message
+            == "The rate limit on the API has been exceeded. The max limit of retires '3' has been exceeded, giving up."
+        )
 
 
 def record_call_time(call_log: list[float]):
