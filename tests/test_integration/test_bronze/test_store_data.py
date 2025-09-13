@@ -71,11 +71,16 @@ class TestAvailableDateRepository:
         expected_available_dates: list[AvailableDateWithForceIds],
         expected_forces: list[Force],
     ) -> None:
-        await available_date_repository.store_available_dates(
-            datetime(2023, 4, 1, tzinfo=UTC), datetime(2023, 6, 1, tzinfo=UTC)
-        )
-
         with Session(engine) as session:
+            session.add(
+                Force(id="avon-and-somerset", name="Avon and Somerset Constabulary")
+            )
+            session.commit()
+
+            await available_date_repository.store_available_dates(
+                datetime(2023, 4, 1, tzinfo=UTC), datetime(2023, 6, 1, tzinfo=UTC)
+            )
+
             stored_forces = session.exec(select(Force)).all()
             stored_available_dates = (
                 session.exec(
