@@ -2,7 +2,8 @@ from datetime import datetime
 from logging import Logger, getLogger
 from typing import TypeVar
 
-from httpx import AsyncClient, HTTPStatusError
+from aiolimiter import AsyncLimiter
+from httpx import AsyncClient, HTTPStatusError, Response
 from pydantic_core import ValidationError
 from sqlmodel import SQLModel
 
@@ -14,10 +15,18 @@ BASE_URL = "https://data.police.uk/api/"
 
 T = TypeVar("T", bound=SQLModel)
 
+ONE_SECOND = 1
+
 
 class PoliceClient(AsyncClient):
-    def __init__(self, base_url: str = BASE_URL, logger: Logger | None = None):
+    def __init__(
+        self,
+        base_url: str = BASE_URL,
+        logger: Logger | None = None,
+        max_requests_per_second: int = 15,
+    ):
         self.logger = logger or getLogger("PoliceClient")
+        self.limiter = AsyncLimiter(max_requests_per_second, ONE_SECOND)
         super().__init__(base_url=base_url)
 
     async def get_forces(self) -> list[Force]:
@@ -62,8 +71,12 @@ class PoliceClient(AsyncClient):
             stop_and_search["force_id"] = force_id
         return self._map_vailidate_models(StopAndSearch, stop_and_searches)
 
-    async def _get_response_body(self, endpoint: str, error_message: str) -> list[dict]:
-        response = await self.get(endpoint)
+    async def rate_limited_get(self, route: str) -> Response:
+        async with self.limiter:
+            return await self.get(route)
+
+    async def _get_response_body(self, route: str, error_message: str) -> list[dict]:
+        response = await self.get(route)
         try:
             response.raise_for_status()
         except HTTPStatusError as error:
