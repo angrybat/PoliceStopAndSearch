@@ -27,7 +27,7 @@ dev = [
 ]
 
 [project.scripts]
-police-api-ingester = "police_api_ingester.main:run"
+police-api-ingester = "police_api_ingester.main:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
