@@ -90,7 +90,7 @@ class AvailableDateRepository:
                 except SQLAlchemyError as error:
                     self.logger.warning(
                         "Cannot flush AvailableDate "
-                        f"to the database for date '{existing_available_date}'.",
+                        f"to the database for date '{available_date}'.",
                         exc_info=error,
                     )
                     return False
@@ -110,7 +110,7 @@ class AvailableDateRepository:
             except SQLAlchemyError:
                 self.logger.warning(
                     "Cannot store AvailableDate and AvailableDateForceMappings "
-                    f"in the database for date '{existing_available_date}'."
+                    f"in the database for date '{available_date}'."
                 )
                 return False
         return True

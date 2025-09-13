@@ -58,6 +58,8 @@ class TestStoreAvailableDates:
         mock_force_repository.store_forces.return_value = forces
         mock_police_client.get_available_dates.return_value = available_dates
         available_date_repository.store_available_date = AsyncMock()
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = []
         available_date_repository.store_available_date.return_value = True
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 5, 1)
@@ -72,17 +74,20 @@ class TestStoreAvailableDates:
                 call(
                     AvailableDateWithForceIds(
                         **{"date": "2023-02", "stop-and-search": ["force-1"]}
-                    )
+                    ),
+                    [],
                 ),
                 call(
                     AvailableDateWithForceIds(
                         **{"date": "2023-03", "stop-and-search": ["force-2"]}
-                    )
+                    ),
+                    [],
                 ),
                 call(
                     AvailableDateWithForceIds(
                         **{"date": "2023-04", "stop-and-search": ["force-3"]}
-                    )
+                    ),
+                    [],
                 ),
             ],
             any_order=True,
@@ -116,6 +121,8 @@ class TestStoreAvailableDates:
         mock_force_repository.store_forces.return_value = forces
         mock_police_client.get_available_dates.return_value = available_dates
         available_date_repository.store_available_date = AsyncMock()
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = []
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 5, 1)
 
@@ -149,6 +156,8 @@ class TestStoreAvailableDates:
         ]
         mock_force_repository.store_forces.return_value = forces
         mock_police_client.get_available_dates.return_value = available_dates
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = []
         available_date_repository.store_available_date = AsyncMock()
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 5, 1)
@@ -177,6 +186,8 @@ class TestStoreAvailableDates:
             "cannot get available dates", request=Mock(), response=Mock()
         )
         available_date_repository.store_available_date = AsyncMock()
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = []
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 5, 1)
 
@@ -214,6 +225,8 @@ class TestStoreAvailableDates:
         mock_force_repository.store_forces.return_value = forces
         mock_police_client.get_available_dates.return_value = available_dates
         available_date_repository.store_available_date = AsyncMock()
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = []
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 5, 1)
         mock_session.commit.side_effect = SQLAlchemyError(
@@ -256,6 +269,8 @@ class TestStoreAvailableDates:
         mock_force_repository.store_forces.return_value = forces
         mock_police_client.get_available_dates.return_value = available_dates
         available_date_repository.store_available_date = AsyncMock()
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = []
         available_date_repository.store_available_date.side_effect = [True, False, True]
         from_date = datetime(2023, 1, 1)
         to_date = datetime(2023, 5, 1)
@@ -280,26 +295,55 @@ class TestStoreAvailableDate:
         mock_session.add.side_effect = set_id
 
         success = await available_date_repository.store_available_date(
-            available_date_with_force_ids
+            available_date_with_force_ids, []
         )
 
         assert success is True
-        mock_session.add.assert_has_calls(
+        mock_session.add.assert_called_once_with(
+            AvailableDate(year_month=year_month, id=1)
+        )
+        mock_session.add_all.assert_called_once_with(
             [
-                call(AvailableDate(year_month=year_month, id=1)),
-                call(
-                    AvailableDateForceMapping(available_date_id=1, force_id="force-1")
-                ),
-                call(
-                    AvailableDateForceMapping(available_date_id=1, force_id="force-2")
-                ),
-                call(
-                    AvailableDateForceMapping(available_date_id=1, force_id="force-3")
-                ),
-            ]
+                AvailableDateForceMapping(available_date_id=1, force_id="force-1"),
+                AvailableDateForceMapping(available_date_id=1, force_id="force-2"),
+                AvailableDateForceMapping(available_date_id=1, force_id="force-3"),
+            ],
         )
         mock_session.commit.assert_called_once()
         mock_session.flush.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_stores_available_date_and_mappings_that_dont_exist(
+        self, mock_session: Session, available_date_repository: AvailableDateRepository
+    ):
+        year_month = "2023-01"
+        force_ids = ["force-1", "force-2", "force-3"]
+        available_date_with_force_ids = AvailableDateWithForceIds(
+            **{"date": year_month, "stop-and-search": force_ids}
+        )
+        mock_session.add.side_effect = set_id
+
+        success = await available_date_repository.store_available_date(
+            available_date_with_force_ids,
+            [
+                AvailableDate(
+                    id=1,
+                    year_month=year_month,
+                    forces=[Force(id="force-1", name="Force One")],
+                )
+            ],
+        )
+
+        assert success is True
+        mock_session.add_all.assert_called_once_with(
+            [
+                AvailableDateForceMapping(available_date_id=1, force_id="force-2"),
+                AvailableDateForceMapping(available_date_id=1, force_id="force-3"),
+            ],
+        )
+        mock_session.commit.assert_called_once()
+        mock_session.flush.assert_not_called()
+        mock_session.add.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_logs_warning_when_cannot_flush_available_date(
@@ -316,7 +360,7 @@ class TestStoreAvailableDate:
         mock_session.flush.side_effect = SQLAlchemyError("Oh No!")
 
         success = await available_date_repository.store_available_date(
-            available_date_with_force_ids
+            available_date_with_force_ids, []
         )
 
         assert success is False
@@ -342,7 +386,7 @@ class TestStoreAvailableDate:
         mock_session.commit.side_effect = SQLAlchemyError("Oh No!")
 
         success = await available_date_repository.store_available_date(
-            available_date_with_force_ids
+            available_date_with_force_ids, []
         )
 
         assert success is False
@@ -357,3 +401,8 @@ class TestStoreAvailableDate:
 def set_id(date: AvailableDate):
     if isinstance(date, AvailableDate):
         date.id = 1
+
+
+# class GetAvailableDates:
+#     @pytest.mark.asyncio
+#     async def test_creates_correct_query_is_created_correctly(self, mock_session: Session, available_date_repository: AvailableDateRepository):
