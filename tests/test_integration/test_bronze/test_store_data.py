@@ -12,6 +12,7 @@ from src.ingest.police_client import PoliceClient
 from src.ingest.repositories.available_date_repository import AvailableDateRepository
 from src.ingest.repositories.stop_and_search_repository import StopAndSearchRepository
 from src.models.bronze.available_date import AvailableDate, AvailableDateWithForceIds
+from src.models.bronze.available_date_force_mapping import AvailableDateForceMapping
 from src.models.bronze.force import Force
 from src.models.bronze.stop_and_search import StopAndSearch
 
@@ -72,8 +73,15 @@ class TestAvailableDateRepository:
         expected_forces: list[Force],
     ) -> None:
         with Session(engine) as session:
+            force = Force(id="avon-and-somerset", name="Avon and Somerset Constabulary")
+            session.add(force)
+            available_date = AvailableDate(year_month="2023-04")
+            session.add(available_date)
+            session.flush()
             session.add(
-                Force(id="avon-and-somerset", name="Avon and Somerset Constabulary")
+                AvailableDateForceMapping(
+                    available_date_id=available_date.id, force_id=force.id
+                )
             )
             session.commit()
 
