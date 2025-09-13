@@ -5,7 +5,8 @@ from logging import Logger, getLogger
 from httpx import HTTPStatusError
 from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlmodel import Session
+from sqlalchemy.orm import joinedload
+from sqlmodel import Session, and_, select
 
 from src.ingest.police_client import PoliceClient
 from src.ingest.repositories.force_repository import ForceRepository
@@ -27,9 +28,10 @@ class AvailableDateRepository:
         self, from_date: datetime, to_date: datetime
     ) -> bool:
         try:
-            forces, available_dates = await gather(
+            forces, available_dates, existing_available_dates = await gather(
                 self.force_repository.store_forces(),
                 self.police_client.get_available_dates(from_date, to_date),
+                self.get_available_dates(from_date, to_date, with_forces=True),
             )
         except HTTPStatusError:
             return False
@@ -58,40 +60,69 @@ class AvailableDateRepository:
 
         results = await gather(
             *[
-                self.store_available_date(available_date)
+                self.store_available_date(available_date, existing_available_dates)
                 for available_date in available_dates
             ]
         )
         return all(results)
 
     async def store_available_date(
-        self, available_date_with_force_ids: AvailableDateWithForceIds
+        self,
+        available_date_with_force_ids: AvailableDateWithForceIds,
+        existing_available_dates: list[AvailableDate],
     ) -> bool:
+        existing_available_date = next(
+            (
+                date
+                for date in existing_available_dates
+                if date.year_month == available_date_with_force_ids.year_month
+            ),
+            None,
+        )
         with Session(self.engine) as session:
-            available_date = AvailableDate(
-                id=None, year_month=available_date_with_force_ids.year_month
-            )
-            try:
-                session.add(available_date)
-                session.flush()
-            except SQLAlchemyError as error:
-                self.logger.warning(
-                    f"Cannot flush AvailableDate to the database for date '{available_date}'.",
-                    exc_info=error,
+            if existing_available_date is None:
+                available_date = AvailableDate(
+                    id=None, year_month=available_date_with_force_ids.year_month
                 )
-                return False
+                try:
+                    session.add(available_date)
+                    session.flush()
+                except SQLAlchemyError as error:
+                    self.logger.warning(
+                        "Cannot flush AvailableDate "
+                        f"to the database for date '{existing_available_date}'.",
+                        exc_info=error,
+                    )
+                    return False
+            else:
+                available_date = existing_available_date
 
             try:
-                for force_id in available_date_with_force_ids.force_ids:
-                    session.add(
-                        AvailableDateForceMapping(
-                            available_date_id=available_date.id, force_id=force_id
-                        )
+                mappings = [
+                    AvailableDateForceMapping(
+                        available_date_id=available_date.id, force_id=force_id
                     )
+                    for force_id in available_date_with_force_ids.force_ids
+                    if force_id not in available_date.force_ids
+                ]
+                session.add_all(mappings)
                 session.commit()
             except SQLAlchemyError:
                 self.logger.warning(
-                    f"Cannot store AvailableDate and AvailableDateForceMappings in the database for date '{available_date}'."
+                    "Cannot store AvailableDate and AvailableDateForceMappings "
+                    f"in the database for date '{existing_available_date}'."
                 )
                 return False
         return True
+
+    async def get_available_dates(
+        self, from_date: datetime, to_date: datetime, with_forces: bool = False
+    ) -> list[AvailableDate]:
+        query = select(AvailableDate).where(
+            and_(from_date.strftime("%Y-%m") <= AvailableDate.year_month),
+            AvailableDate.year_month <= to_date.strftime("%Y-%m"),
+        )
+        if with_forces:
+            query = query.options(joinedload(AvailableDate.forces))  # type: ignore
+        with Session(self.engine) as session:
+            return list(session.exec(query).unique().all())

@@ -25,6 +25,10 @@ class AvailableDate(SQLModel, table=True):
         back_populates="available_dates", link_model=AvailableDateForceMapping
     )
 
+    @property
+    def force_ids(self) -> list[str]:
+        return [force.id for force in self.forces if force.id is not None]
+
     # SQLModel does not support aliases at the moment thus we need to use a validator
     @model_validator(mode="before")
     @classmethod
@@ -35,7 +39,7 @@ class AvailableDate(SQLModel, table=True):
     def __eq__(self, other):
         if isinstance(other, AvailableDateWithForceIds):
             return other.year_month == self.year_month and set(other.force_ids) == set(
-                force.id for force in self.forces
+                self.force_ids
             )
         if isinstance(other, AvailableDate):
             return other.year_month == self.year_month
@@ -61,7 +65,7 @@ class AvailableDateWithForceIds(SQLModel):
     def __eq__(self, other):
         if isinstance(other, AvailableDate):
             return other.year_month == self.year_month and set(self.force_ids) == set(
-                force.id for force in other.forces
+                other.force_ids
             )
         if isinstance(other, AvailableDateWithForceIds):
             return (
