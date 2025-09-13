@@ -11,7 +11,7 @@ from src.models.bronze.stop_and_search import StopAndSearch
 
 @pytest.fixture
 def test_data_directory() -> Path:
-    return Path("tests/test_integration/test_data")
+    return Path("tests/test_integration/test_ingest/test_data")
 
 
 @pytest.fixture
