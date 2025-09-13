@@ -3,7 +3,7 @@ from datetime import datetime
 
 from typer import Typer
 
-from src.ingest.factories import (
+from src.police_api_ingester.factories import (
     get_available_date_repository,
     get_force_repository,
     get_stop_and_search_repository,

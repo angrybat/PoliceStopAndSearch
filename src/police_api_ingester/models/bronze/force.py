@@ -2,11 +2,13 @@ from typing import TYPE_CHECKING
 
 from sqlmodel import Column, Field, Relationship, SQLModel, String
 
-from src.models.bronze.available_date_force_mapping import AvailableDateForceMapping
+from src.police_api_ingester.models.bronze.available_date_force_mapping import (
+    AvailableDateForceMapping,
+)
 
 if TYPE_CHECKING:
-    from src.models.bronze.available_date import AvailableDate
-    from src.models.bronze.stop_and_search import StopAndSearch
+    from src.police_api_ingester.models.bronze.available_date import AvailableDate
+    from src.police_api_ingester.models.bronze.stop_and_search import StopAndSearch
 
 
 class Force(SQLModel, table=True):

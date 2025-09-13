@@ -7,8 +7,10 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
-from src.ingest.police_client import PoliceClient
-from src.ingest.repositories.available_date_repository import AvailableDateRepository
+from src.police_api_ingester.police_client import PoliceClient
+from src.police_api_ingester.repositories import (
+    AvailableDateRepository,
+)
 
 
 class StopAndSearchRepository:

@@ -2,12 +2,14 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.ingest.police_client import (
+from src.police_api_ingester.models import (
+    AvailableDateWithForceIds,
+    Force,
+    StopAndSearch,
+)
+from src.police_api_ingester.police_client import (
     PoliceClient,
 )
-from src.models.bronze.available_date import AvailableDateWithForceIds
-from src.models.bronze.force import Force
-from src.models.bronze.stop_and_search import StopAndSearch
 
 
 class TestGetForces:

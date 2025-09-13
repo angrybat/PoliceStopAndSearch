@@ -6,8 +6,8 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session, select
 
-from src.ingest.police_client import PoliceClient
-from src.models.bronze.force import Force
+from src.police_api_ingester.models import Force
+from src.police_api_ingester.police_client import PoliceClient
 
 
 class ForceRepository:

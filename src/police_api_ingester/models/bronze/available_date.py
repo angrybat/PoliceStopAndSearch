@@ -3,10 +3,12 @@ from typing import TYPE_CHECKING, Any
 from pydantic import model_validator
 from sqlmodel import INTEGER, Column, Field, Relationship, SQLModel, String
 
-from src.models.bronze.available_date_force_mapping import AvailableDateForceMapping
+from src.police_api_ingester.models.bronze.available_date_force_mapping import (
+    AvailableDateForceMapping,
+)
 
 if TYPE_CHECKING:
-    from src.models.bronze.force import Force
+    from src.police_api_ingester.models.bronze.force import Force
 
 
 class AvailableDate(SQLModel, table=True):

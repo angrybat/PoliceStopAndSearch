@@ -8,9 +8,11 @@ from httpx import AsyncClient, HTTPStatusError, Response
 from pydantic_core import ValidationError
 from sqlmodel import SQLModel
 
-from src.models.bronze.available_date import AvailableDateWithForceIds
-from src.models.bronze.force import Force
-from src.models.bronze.stop_and_search import StopAndSearch
+from src.police_api_ingester.models import (
+    AvailableDateWithForceIds,
+    Force,
+    StopAndSearch,
+)
 
 BASE_URL = "https://data.police.uk/api/"
 

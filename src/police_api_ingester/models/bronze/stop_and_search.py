@@ -16,7 +16,7 @@ from sqlmodel import (
     String,
 )
 
-from src.models.bronze.force import Force
+from src.police_api_ingester.models.bronze.force import Force
 
 
 class StopAndSearch(SQLModel, table=True):

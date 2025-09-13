@@ -5,10 +5,12 @@ from logging import Logger, basicConfig
 
 from sqlalchemy import create_engine
 
-from src.ingest.police_client import BASE_URL, PoliceClient
-from src.ingest.repositories.available_date_repository import AvailableDateRepository
-from src.ingest.repositories.force_repository import ForceRepository
-from src.ingest.repositories.stop_and_search_repository import StopAndSearchRepository
+from src.police_api_ingester.police_client import BASE_URL, PoliceClient
+from src.police_api_ingester.repositories import (
+    AvailableDateRepository,
+    ForceRepository,
+    StopAndSearchRepository,
+)
 
 basicConfig(
     stream=sys.stdout,

@@ -8,13 +8,18 @@ from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, SQLModel, desc, inspect, select, text
 
-from src.ingest.police_client import PoliceClient
-from src.ingest.repositories.available_date_repository import AvailableDateRepository
-from src.ingest.repositories.stop_and_search_repository import StopAndSearchRepository
-from src.models.bronze.available_date import AvailableDate, AvailableDateWithForceIds
-from src.models.bronze.available_date_force_mapping import AvailableDateForceMapping
-from src.models.bronze.force import Force
-from src.models.bronze.stop_and_search import StopAndSearch
+from src.police_api_ingester.models import (
+    AvailableDate,
+    AvailableDateForceMapping,
+    AvailableDateWithForceIds,
+    Force,
+    StopAndSearch,
+)
+from src.police_api_ingester.police_client import PoliceClient
+from src.police_api_ingester.repositories import (
+    AvailableDateRepository,
+    StopAndSearchRepository,
+)
 
 DEFAULT_DB_URL = "postgresql+psycopg2://postgres:password@localhost:5432/postgres"
 

@@ -9,11 +9,11 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
-from src.ingest.police_client import PoliceClient
-from src.ingest.repositories.stop_and_search_repository import StopAndSearchRepository
-from src.models.bronze.available_date import AvailableDate
-from src.models.bronze.force import Force
-from src.models.bronze.stop_and_search import StopAndSearch
+from src.police_api_ingester.models import AvailableDate, Force, StopAndSearch
+from src.police_api_ingester.police_client import PoliceClient
+from src.police_api_ingester.repositories.stop_and_search_repository import (
+    StopAndSearchRepository,
+)
 
 
 @pytest.fixture

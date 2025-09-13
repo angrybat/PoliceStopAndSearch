@@ -9,10 +9,12 @@ import pytest
 from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 
-from src.ingest.police_client import BASE_URL, PoliceClient
-from src.models.bronze.available_date import AvailableDateWithForceIds
-from src.models.bronze.force import Force
-from src.models.bronze.stop_and_search import StopAndSearch
+from src.police_api_ingester.models import (
+    AvailableDateWithForceIds,
+    Force,
+    StopAndSearch,
+)
+from src.police_api_ingester.police_client import BASE_URL, PoliceClient
 
 
 class TestInit:
@@ -433,7 +435,9 @@ class TestRateLimitedGet:
 
     @pytest.mark.asyncio
     # Set 1 second to 0.01 seconds to speed up the test
-    @patch("src.ingest.police_client.ONE_SECOND", new_callable=lambda: 0.01)
+    @patch(
+        "src.police_api_ingester.police_client.ONE_SECOND", new_callable=lambda: 0.01
+    )
     async def test_requests_are_limited(self, _):
         calls_log = []
         requests_per_second = 5
