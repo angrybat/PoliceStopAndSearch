@@ -76,7 +76,7 @@ class PoliceClient(AsyncClient):
             return await self.get(route)
 
     async def _get_response_body(self, route: str, error_message: str) -> list[dict]:
-        response = await self.get(route)
+        response = await self.rate_limited_get(route)
         try:
             response.raise_for_status()
         except HTTPStatusError as error:
