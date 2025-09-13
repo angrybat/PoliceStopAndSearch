@@ -1,4 +1,0 @@
-dagger-io==0.18.17
-alembic==1.16.5
-pytest==8.4.2
-pytest-asyncio==1.1.0
