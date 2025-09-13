@@ -462,7 +462,7 @@ class TestRateLimitedGet:
         mock_get = AsyncMock()
         police_client.get = mock_get
         mock_too_many_request_response = Mock()
-        mock_too_many_request_response.status_code = 429
+        mock_too_many_request_response.status_code = HTTPStatus.TOO_MANY_REQUESTS
         mock_too_many_request_response.raise_for_status.side_effect = HTTPStatusError(
             "rate limit exceeded!", request=Mock(), response=Mock()
         )
