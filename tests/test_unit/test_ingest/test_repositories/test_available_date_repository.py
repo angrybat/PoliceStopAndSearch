@@ -9,14 +9,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.operators import ge, le
 from sqlmodel import Session
 
-from src.police_api_ingester.models import (
+from police_api_ingester.models import (
     AvailableDate,
     AvailableDateForceMapping,
     AvailableDateWithForceIds,
     Force,
 )
-from src.police_api_ingester.police_client import PoliceClient
-from src.police_api_ingester.repositories import (
+from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories import (
     AvailableDateRepository,
     ForceRepository,
 )
@@ -441,9 +441,9 @@ class TestGetAvailableDates:
     @pytest.mark.parametrize(
         "with_forces", [True, False], ids=["with_forces=True", "with_forces=False"]
     )
-    @patch("src.police_api_ingester.repositories.available_date_repository.joinedload")
-    @patch("src.police_api_ingester.repositories.available_date_repository.and_")
-    @patch("src.police_api_ingester.repositories.available_date_repository.select")
+    @patch("police_api_ingester.repositories.available_date_repository.joinedload")
+    @patch("police_api_ingester.repositories.available_date_repository.and_")
+    @patch("police_api_ingester.repositories.available_date_repository.select")
     async def test_creates_correct_query_and_returns_correct_dates(
         self,
         mock_select: Mock,

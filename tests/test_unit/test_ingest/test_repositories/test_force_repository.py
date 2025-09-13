@@ -6,9 +6,9 @@ from pytest import LogCaptureFixture, Session
 from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.police_api_ingester.models import Force
-from src.police_api_ingester.police_client import PoliceClient
-from src.police_api_ingester.repositories import ForceRepository
+from police_api_ingester.models import Force
+from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories import ForceRepository
 
 
 @pytest.fixture
@@ -169,7 +169,7 @@ class TestStoreForces:
 
 class TestGetAllForces:
     @pytest.mark.asyncio
-    @patch("src.police_api_ingester.repositories.force_repository.select")
+    @patch("police_api_ingester.repositories.force_repository.select")
     async def test_correct_query_is_created(
         self,
         mock_select: Mock,

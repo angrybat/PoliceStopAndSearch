@@ -9,12 +9,12 @@ import pytest
 from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 
-from src.police_api_ingester.models import (
+from police_api_ingester.models import (
     AvailableDateWithForceIds,
     Force,
     StopAndSearch,
 )
-from src.police_api_ingester.police_client import BASE_URL, PoliceClient
+from police_api_ingester.police_client import BASE_URL, PoliceClient
 
 
 class TestInit:

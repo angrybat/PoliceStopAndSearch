@@ -8,14 +8,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, and_, select
 
-from src.police_api_ingester.models import (
+from police_api_ingester.models import (
     AvailableDate,
     AvailableDateForceMapping,
     AvailableDateWithForceIds,
     Force,
 )
-from src.police_api_ingester.police_client import PoliceClient
-from src.police_api_ingester.repositories.force_repository import ForceRepository
+from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories.force_repository import ForceRepository
 
 
 class AvailableDateRepository:

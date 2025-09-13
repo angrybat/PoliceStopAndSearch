@@ -23,7 +23,7 @@ PIP_CACHE_PATH = f"{USER_HOME}/.cache/pip"
 
 
 @object_type
-class PoliceStopAndSearch:
+class PoliceApiIngester:
     @function
     def postgres(
         self,

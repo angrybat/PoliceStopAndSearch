@@ -9,9 +9,9 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
-from src.police_api_ingester.models import AvailableDate, Force, StopAndSearch
-from src.police_api_ingester.police_client import PoliceClient
-from src.police_api_ingester.repositories.stop_and_search_repository import (
+from police_api_ingester.models import AvailableDate, Force, StopAndSearch
+from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories import (
     StopAndSearchRepository,
 )
 

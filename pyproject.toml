@@ -1,28 +1,34 @@
-[project]
-name = "police-stop-and-search"
-version = "0.1.0"
-requires-python = ">=3.13"
-dependencies = ["dagger-io"]
-
 [build-system]
-requires = ["uv_build>=0.8.4,<0.9.0"]
-build-backend = "uv_build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
-[tool.uv.sources]
-dagger-io = { path = "sdk", editable = true }
+[project]
+name = "police_api_ingester"
+version = "0.1.0"
+description = "Ingests data into a SQL database from a police API"
+authors = [
+  { name = "Jason Moore", email = "you@example.com" }
+]
+requires-python = ">=3.9"
+dependencies = [
+  "sqlmodel==0.0.24",
+  "psycopg2-binary==2.9.10",
+  "httpx==0.28.1",
+  "aiolimiter==1.2.1",
+  "typer==0.17.4"
+]
 
-[tool.ruff]
-line-length = 88
-indent-width = 4
-target-version = "py310"
+[project.optional-dependencies]
+dev = [
+  "dagger-io==0.18.17",
+  "alembic==1.16.5",
+  "pytest==8.4.2",
+  "pytest-asyncio==1.1.0"
+]
 
-lint.select = ["F", "E", "W", "I", "B", "UP"]
+[project.scripts]
+police-api-ingester = "police_api_ingester.main:run"
 
-lint.ignore = ["E203"]
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
-lint.preview = true
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-skip-magic-trailing-comma = false

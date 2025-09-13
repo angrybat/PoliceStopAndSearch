@@ -5,8 +5,8 @@ from logging import Logger, basicConfig
 
 from sqlalchemy import create_engine
 
-from src.police_api_ingester.police_client import BASE_URL, PoliceClient
-from src.police_api_ingester.repositories import (
+from police_api_ingester.police_client import BASE_URL, PoliceClient
+from police_api_ingester.repositories import (
     AvailableDateRepository,
     ForceRepository,
     StopAndSearchRepository,
@@ -24,7 +24,7 @@ logger = logging.getLogger()
 def get_engine(logger: Logger):
     database_url = os.getenv("DATABASE_URL")
     if database_url is None:
-        error_message = "Cannot create database engine as the 'DATABASE_URL' enviroment variable is not set"
+        error_message = "Cannot create database engine as the 'DATABASE_URL' enviroment variable is not set."
         logger.critical(error_message)
         raise RuntimeError(error_message)
     engine = create_engine(database_url)

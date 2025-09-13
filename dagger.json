@@ -1,7 +1,8 @@
 {
-  "name": "PoliceStopAndSearch",
+  "name": "PoliceApiIngester",
   "engineVersion": "v0.18.17",
   "sdk": {
     "source": "python"
-  }
+  },
+  "source": "dagger"
 }

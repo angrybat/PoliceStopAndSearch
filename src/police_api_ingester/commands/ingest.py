@@ -3,7 +3,7 @@ from datetime import datetime
 
 from typer import Typer
 
-from src.police_api_ingester.factories import (
+from police_api_ingester.factories import (
     get_available_date_repository,
     get_force_repository,
     get_stop_and_search_repository,
@@ -12,19 +12,19 @@ from src.police_api_ingester.factories import (
 ingest = Typer()
 
 
-@ingest.command()
+@ingest.command("forces")
 def store_forces_in_bronze() -> None:
     force_repository = get_force_repository()
     run(force_repository.store_forces())
 
 
-@ingest.command()
+@ingest.command("available_dates")
 def store_available_dates(from_datetime: datetime, to_datetime: datetime) -> None:
     available_date_repository = get_available_date_repository()
     run(available_date_repository.store_available_dates(from_datetime, to_datetime))
 
 
-@ingest.command()
+@ingest.command("stop_and_searches")
 def store_stop_and_searches(
     from_datetime: datetime,
     to_datetime: datetime,

@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import Engine
 from sqlmodel import Session
 
-from src.police_api_ingester.police_client import PoliceClient
+from police_api_ingester.police_client import PoliceClient
 
 
 @pytest.fixture

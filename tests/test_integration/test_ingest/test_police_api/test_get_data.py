@@ -2,12 +2,12 @@ from datetime import UTC, datetime
 
 import pytest
 
-from src.police_api_ingester.models import (
+from police_api_ingester.models import (
     AvailableDateWithForceIds,
     Force,
     StopAndSearch,
 )
-from src.police_api_ingester.police_client import (
+from police_api_ingester.police_client import (
     PoliceClient,
 )
 

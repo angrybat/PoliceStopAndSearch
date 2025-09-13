@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from src.police_api_ingester.models import (
+from police_api_ingester.models import (
     AvailableDateWithForceIds,
     Force,
     StopAndSearch,

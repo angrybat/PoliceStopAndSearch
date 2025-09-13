@@ -7,8 +7,8 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Session
 
-from src.police_api_ingester.police_client import PoliceClient
-from src.police_api_ingester.repositories import (
+from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories.available_date_repository import (
     AvailableDateRepository,
 )
 

@@ -8,15 +8,15 @@ from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import joinedload
 from sqlmodel import Session, SQLModel, desc, inspect, select, text
 
-from src.police_api_ingester.models import (
+from police_api_ingester.models import (
     AvailableDate,
     AvailableDateForceMapping,
     AvailableDateWithForceIds,
     Force,
     StopAndSearch,
 )
-from src.police_api_ingester.police_client import PoliceClient
-from src.police_api_ingester.repositories import (
+from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories import (
     AvailableDateRepository,
     StopAndSearchRepository,
 )

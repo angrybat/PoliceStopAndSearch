@@ -1,4 +1,4 @@
-"""A generated module for PoliceStopAndSearch functions
+"""A generated module for Dagger functions
 
 This module has been generated via dagger init and serves as a reference to
 basic module structure as you get started with Dagger.
@@ -13,4 +13,4 @@ rest is a long description with more detail on the module's purpose or usage,
 if appropriate. All modules should have a short description.
 """
 
-from .main import PoliceStopAndSearch as PoliceStopAndSearch
+from .main import PoliceApiIngester as PoliceApiIngester

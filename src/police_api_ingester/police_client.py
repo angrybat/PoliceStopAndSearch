@@ -8,7 +8,7 @@ from httpx import AsyncClient, HTTPStatusError, Response
 from pydantic_core import ValidationError
 from sqlmodel import SQLModel
 
-from src.police_api_ingester.models import (
+from police_api_ingester.models import (
     AvailableDateWithForceIds,
     Force,
     StopAndSearch,
