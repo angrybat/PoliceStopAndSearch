@@ -199,6 +199,33 @@ class TestStoreAvailableDates:
         assert success is False
 
     @pytest.mark.asyncio
+    async def test_returns_false_if_cannot_get_available_dates_from_the_database(
+        self,
+        mock_session: Session,
+        available_date_repository: AvailableDateRepository,
+        mock_force_repository: ForceRepository,
+        mock_police_client: PoliceClient,
+    ):
+        forces = [
+            Force(id="force-1", name="Force One"),
+            Force(id="force-2", name="Force Two"),
+            Force(id="force-3", name="Force Three"),
+        ]
+        mock_force_repository.store_forces.return_value = forces
+        mock_police_client.get_available_dates.return_value = []
+        available_date_repository.store_available_date = AsyncMock()
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = None
+        from_date = datetime(2023, 1, 1)
+        to_date = datetime(2023, 5, 1)
+
+        success = await available_date_repository.store_available_dates(
+            from_date, to_date
+        )
+
+        assert success is False
+
+    @pytest.mark.asyncio
     async def test_logs_error_when_cannot_store_missing_forces_to_database(
         self,
         mock_session: Session,
