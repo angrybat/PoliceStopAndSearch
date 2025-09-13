@@ -21,8 +21,17 @@ class StopAndSearchRepository:
         self.logger = logger or getLogger("StopAndSearchRepository")
 
     async def store_stop_and_searches(
-        self, from_datetime: datetime, to_datetime: datetime
+        self,
+        from_datetime: datetime,
+        to_datetime: datetime,
+        store_available_dates: bool = False,
     ) -> bool:
+        if store_available_dates:
+            success = await self.available_date_repository.store_available_dates(
+                from_datetime, to_datetime
+            )
+            if not success:
+                return False
         available_dates = await self.available_date_repository.get_available_dates(
             from_datetime, to_datetime, with_forces=True
         )
