@@ -39,7 +39,7 @@ class TestGetForces:
         mock_response = Mock()
         mock_response.json.return_value = returned_forces
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
 
         forces = await police_client.get_forces()
 
@@ -58,7 +58,7 @@ class TestGetForces:
             "API says no", request=Mock(), response=Mock(status_code=500)
         )
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
 
         with pytest.raises(HTTPStatusError):
             await police_client.get_forces()
@@ -77,7 +77,7 @@ class TestGetForces:
         mock_response = Mock()
         mock_response.json.return_value = returned_forces
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
 
         forces = await police_client.get_forces()
 
@@ -101,7 +101,7 @@ class TestGetAvailableDates:
         mock_response = Mock()
         mock_response.json.return_value = returned_available_dates
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
 
         available_dates = await police_client.get_available_dates(
             datetime(2022, 6, 1), datetime(2023, 8, 1)
@@ -126,7 +126,7 @@ class TestGetAvailableDates:
             "API says no", request=Mock(), response=Mock(status_code=500)
         )
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
 
         with pytest.raises(HTTPStatusError):
             await police_client.get_available_dates(
@@ -147,7 +147,7 @@ class TestGetAvailableDates:
         mock_response = Mock()
         mock_response.json.return_value = returned_available_dates
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
 
         available_dates = await police_client.get_available_dates(
             datetime(2022, 6, 1), datetime(2023, 8, 1)
@@ -233,7 +233,7 @@ class TestGetStopAndSearches:
         mock_response = Mock()
         mock_response.json.return_value = returned_stop_and_searches
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
         force_id = "leicestershire"
         date = "2023-07"
 
@@ -313,7 +313,7 @@ class TestGetStopAndSearches:
             "API says no", request=Mock(), response=Mock(status_code=500)
         )
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
         force_id = "leicestershire"
         date = "2023-07"
 
@@ -396,7 +396,7 @@ class TestGetStopAndSearches:
         mock_response = Mock()
         mock_response.json.return_value = returned_stop_and_searches
         mock_get = AsyncMock(return_value=mock_response)
-        police_client.get = mock_get
+        police_client.rate_limited_get = mock_get
         force_id = "leicestershire"
         date = "2023-07"
 
