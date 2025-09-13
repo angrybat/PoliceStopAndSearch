@@ -86,6 +86,10 @@ class TestStoreForces:
         mock_police_client.get_forces.side_effect = HTTPStatusError(
             "you get no forces!", response=Mock(), request=Mock()
         )
+        force_repository.get_all_forces = AsyncMock()
+        force_repository.get_all_forces.return_value = [
+            Force(id="force-1", name="Force One")
+        ]
 
         stored_forces = await force_repository.store_forces()
 
