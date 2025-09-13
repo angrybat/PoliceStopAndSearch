@@ -450,9 +450,7 @@ class TestRateLimitedGet:
             count_in_window = sum(
                 1 for time in calls_log if window_start <= time < window_start + 0.01
             )
-            # Doubled requests per second because the API
-            # can support twice the amount of requests in its bucket.
-            assert count_in_window <= requests_per_second * 2, (
+            assert count_in_window <= requests_per_second, (
                 f"Too many calls in 1 second: {count_in_window}"
             )
 

@@ -24,9 +24,11 @@ class PoliceClient(AsyncClient):
         base_url: str = BASE_URL,
         logger: Logger | None = None,
         max_requests_per_second: int = 15,
+        max_request_retries: int = 5,
     ):
         self.logger = logger or getLogger("PoliceClient")
-        self.limiter = AsyncLimiter(max_requests_per_second, ONE_SECOND)
+        self.limiter = AsyncLimiter(1, ONE_SECOND / max_requests_per_second)
+        self.max_request_retries = max_request_retries
         super().__init__(base_url=base_url)
 
     async def get_forces(self) -> list[Force]:
