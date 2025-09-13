@@ -36,7 +36,7 @@ class AvailableDateRepository:
         except HTTPStatusError:
             return False
 
-        if forces is None:
+        if forces is None or existing_available_dates is None:
             return False
 
         missing_forces = set(
