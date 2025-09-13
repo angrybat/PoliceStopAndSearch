@@ -7,7 +7,6 @@ from httpx import HTTPStatusError
 from pytest import LogCaptureFixture
 from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql.operators import ge, le
 from sqlmodel import Session
 
 from src.ingest.police_client import PoliceClient
@@ -38,7 +37,6 @@ class TestStoreStopAndSearches:
     @pytest.mark.asyncio
     async def test_makes_correct_store_stop_and_search_calls(
         self,
-        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
     ):
         available_dates = [
@@ -59,9 +57,12 @@ class TestStoreStopAndSearches:
                 ],
             ),
         ]
-        mock_session.exec.return_value.unique.return_value.all = Mock(
-            return_value=available_dates
+        mock_available_date_repository = Mock()
+        stop_and_search_repository.available_date_repository = (
+            mock_available_date_repository
         )
+        mock_get_available_dates = AsyncMock(return_value=available_dates)
+        mock_available_date_repository.get_available_dates = mock_get_available_dates
         stop_and_search_repository.store_stop_and_search = AsyncMock()
         stop_and_search_repository.store_stop_and_search.side_effect = [
             True,
@@ -79,6 +80,9 @@ class TestStoreStopAndSearches:
         )
 
         assert success is True
+        mock_get_available_dates.assert_called_once_with(
+            from_datetime, to_datetime, with_forces=True
+        )
         stop_and_search_repository.store_stop_and_search.assert_has_awaits(
             [
                 call("2023-01", "force-one", from_datetime, to_datetime),
@@ -94,7 +98,6 @@ class TestStoreStopAndSearches:
     @pytest.mark.asyncio
     async def test_returns_false_if_a_stop_and_search_calls_fails(
         self,
-        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
     ):
         available_dates = [
@@ -115,9 +118,12 @@ class TestStoreStopAndSearches:
                 ],
             ),
         ]
-        mock_session.exec.return_value.unique.return_value.all = Mock(
-            return_value=available_dates
+        mock_available_date_repository = Mock()
+        stop_and_search_repository.available_date_repository = (
+            mock_available_date_repository
         )
+        mock_get_available_dates = AsyncMock(return_value=available_dates)
+        mock_available_date_repository.get_available_dates = mock_get_available_dates
         stop_and_search_repository.store_stop_and_search = AsyncMock()
         stop_and_search_repository.store_stop_and_search.side_effect = [
             True,
@@ -137,68 +143,16 @@ class TestStoreStopAndSearches:
         assert success is False
 
     @pytest.mark.asyncio
-    @patch("src.ingest.repositories.stop_and_search_repository.joinedload")
-    @patch("src.ingest.repositories.stop_and_search_repository.select")
-    async def test_makes_correct_query_to_get_available_dates(
+    async def test_returns_false_when_cannot_retrieve_available_dates(
         self,
-        mock_select: Mock,
-        mock_joinedload: Mock,
-        mock_session: Mock,
         stop_and_search_repository: StopAndSearchRepository,
     ):
-        available_dates = [
-            AvailableDate(
-                year_month="2023-01",
-                forces=[
-                    Force(id="force-one", name="Force One"),
-                    Force(id="force-two", name="Force Two"),
-                    Force(id="force-three", name="Force Three"),
-                ],
-            ),
-            AvailableDate(
-                year_month="2023-02",
-                forces=[
-                    Force(id="force-one", name="Force One"),
-                    Force(id="force-two", name="Force Two"),
-                    Force(id="force-three", name="Force Three"),
-                ],
-            ),
-        ]
-        mock_session.exec.return_value.unique.return_value.all = Mock(
-            return_value=available_dates
+        mock_available_date_repository = Mock()
+        stop_and_search_repository.available_date_repository = (
+            mock_available_date_repository
         )
-        stop_and_search_repository.store_stop_and_search = AsyncMock()
-        from_datetime = datetime(2023, 1, 1, 1, 0, 0)
-        to_datetime = datetime(2023, 2, 1, 3, 45, 0)
-        mock_options = Mock()
-        mock_where = Mock()
-        mock_select.return_value.where = mock_where
-        mock_where.return_value.options = mock_options
-
-        await stop_and_search_repository.store_stop_and_searches(
-            from_datetime, to_datetime
-        )
-
-        mock_select.assert_called_once_with(AvailableDate)
-        mock_where.assert_called_once()
-        mock_options.assert_called_once_with(mock_joinedload.return_value)
-        mock_joinedload.assert_called_once_with(AvailableDate.forces)
-        from_clause, to_clause = mock_where.call_args_list[0][0][0].clauses
-        assert from_clause.left == AvailableDate.year_month
-        assert from_clause.right.value == "2023-01"
-        assert from_clause.operator == ge
-        assert to_clause.right.value == "2023-02"
-        assert to_clause.left == AvailableDate.year_month
-        assert to_clause.operator == le
-
-    @pytest.mark.asyncio
-    async def test_logs_error_when_cannot_retrieve_available_dates(
-        self,
-        mock_session: Mock,
-        stop_and_search_repository: StopAndSearchRepository,
-        caplog: pytest.LogCaptureFixture,
-    ):
-        mock_session.exec.side_effect = SQLAlchemyError("database says no!")
+        mock_get_available_dates = AsyncMock(return_value=None)
+        mock_available_date_repository.get_available_dates = mock_get_available_dates
         from_datetime = datetime(2023, 1, 1, 1, 0, 0)
         to_datetime = datetime(2023, 2, 1, 3, 45, 0)
 
@@ -207,9 +161,6 @@ class TestStoreStopAndSearches:
         )
 
         assert success is False
-        record = caplog.records[-1]
-        assert record.message == "Cannot retreive AvailableDates from the database."
-        assert record.levelname == "ERROR"
 
 
 class TestStopAndSearch:
