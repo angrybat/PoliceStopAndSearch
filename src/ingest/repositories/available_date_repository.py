@@ -117,12 +117,23 @@ class AvailableDateRepository:
 
     async def get_available_dates(
         self, from_date: datetime, to_date: datetime, with_forces: bool = False
-    ) -> list[AvailableDate]:
+    ) -> list[AvailableDate] | None:
+        from_year_month = from_date.strftime("%Y-%m")
+        to_year_month = to_date.strftime("%Y-%m")
         query = select(AvailableDate).where(
-            and_(from_date.strftime("%Y-%m") <= AvailableDate.year_month),
-            AvailableDate.year_month <= to_date.strftime("%Y-%m"),
+            and_(
+                from_year_month <= AvailableDate.year_month,
+                AvailableDate.year_month <= to_year_month,
+            )
         )
         if with_forces:
             query = query.options(joinedload(AvailableDate.forces))  # type: ignore
         with Session(self.engine) as session:
-            return list(session.exec(query).unique().all())
+            try:
+                return list(session.exec(query).unique().all())
+            except SQLAlchemyError:
+                self.logger.exception(
+                    "Could not retrieve AvailableDates from the "
+                    f"database between '{from_year_month}' to '{to_year_month}'."
+                )
+                return None
