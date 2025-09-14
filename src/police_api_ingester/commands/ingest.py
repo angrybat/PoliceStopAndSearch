@@ -19,13 +19,13 @@ def default_timezone_to_utc(value: datetime) -> datetime:
 
 
 @ingest.command("forces")
-def store_forces_in_bronze() -> None:
+def ingest_forces() -> None:
     force_repository = get_force_repository()
     run(force_repository.store_forces())
 
 
 @ingest.command("available-dates")
-def store_available_dates(
+def ingest_available_dates(
     from_datetime: datetime = Argument(..., callback=default_timezone_to_utc),
     to_datetime: datetime = Argument(..., callback=default_timezone_to_utc),
 ) -> None:
@@ -34,7 +34,7 @@ def store_available_dates(
 
 
 @ingest.command("stop-and-searches")
-def store_stop_and_searches(
+def ingest_stop_and_searches(
     from_datetime: datetime = Argument(..., callback=default_timezone_to_utc),
     to_datetime: datetime = Argument(..., callback=default_timezone_to_utc),
     run_store_available_dates: bool = True,
