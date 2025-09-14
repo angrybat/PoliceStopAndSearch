@@ -1,8 +1,9 @@
 from asyncio import run
-from datetime import datetime, timezone
+from datetime import datetime
 
 from typer import Argument, Typer
 
+from police_api_ingester.commands.parsers import default_timezone_to_utc
 from police_api_ingester.factories import (
     get_available_date_repository,
     get_force_repository,
