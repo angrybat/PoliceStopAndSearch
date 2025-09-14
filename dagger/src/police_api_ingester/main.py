@@ -22,6 +22,7 @@ BACKUP_FILE_DOC = Doc("A postgres backup file to restore from")
 
 USER = "sgt_angle"
 USER_HOME = f"/home/{USER}"
+USER_LOCAL_PATH = f"{USER_HOME}/.local"
 PIP_CACHE_PATH = f"{USER_HOME}/.cache/pip"
 POSTGRES_BACKUPS_DIRECTORY = "/backups"
 POSTGRES_BACKUP_FILE = f"{POSTGRES_BACKUPS_DIRECTORY}/backup.sql"
@@ -204,11 +205,13 @@ class PoliceApiIngester:
             dag.container()
             .from_(f"python:{tag}")
             .with_exec(["useradd", "-m", USER])
-            .with_mounted_cache(PIP_CACHE_PATH, pip_cache, owner=USER)
             .with_user(USER)
-            .with_env_variable("PIP_CACHE_DIR", PIP_CACHE_PATH)
+            .with_directory("/app", dag.directory(), owner=USER)
+            .with_directory(USER_LOCAL_PATH, dag.directory(), owner=USER)
             .with_directory("/app/src", source.directory("src"), owner=USER)
             .with_file("/app/pyproject.toml", source.file("pyproject.toml"), owner=USER)
+            .with_env_variable("PIP_CACHE_DIR", PIP_CACHE_PATH)
+            .with_mounted_cache(PIP_CACHE_PATH, pip_cache, owner=USER)
             .with_workdir("/app")
         )
         path = await container.env_variable("PATH")
@@ -226,6 +229,6 @@ class PoliceApiIngester:
         )
         return (
             container.with_file("pyproject.toml", source.file("pyproject.toml"))
-            .with_exec(["pip", "install", dependencies])
+            .with_exec(["pip", "install", "--user", dependencies])
             .without_file("pyproject.toml")
         )
