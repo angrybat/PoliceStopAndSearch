@@ -1,5 +1,5 @@
 from asyncio import gather
-from logging import Logger, getLogger
+from logging import Logger
 
 from httpx import HTTPStatusError
 from sqlalchemy import Engine
@@ -8,15 +8,14 @@ from sqlmodel import Session, select
 
 from police_api_ingester.models import Force
 from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories.repository import Repository
 
 
-class ForceRepository:
+class ForceRepository(Repository):
     def __init__(
         self, engine: Engine, police_client: PoliceClient, logger: Logger | None = None
     ):
-        self.engine = engine
-        self.police_client = police_client
-        self.logger = logger or getLogger("ForceRepository")
+        super().__init__(engine, police_client, logger)
 
     async def store_forces(self) -> list[Force] | None:
         try:

@@ -4,6 +4,7 @@ from police_api_ingester.repositories.available_date_repository import (
 from police_api_ingester.repositories.force_repository import (
     ForceRepository as ForceRepository,
 )
+from police_api_ingester.repositories.repository import Repository as Repository
 from police_api_ingester.repositories.stop_and_search_repository import (
     StopAndSearchRepository as StopAndSearchRepository,
 )

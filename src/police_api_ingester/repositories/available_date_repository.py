@@ -1,6 +1,6 @@
 from asyncio import gather
 from datetime import datetime
-from logging import Logger, getLogger
+from logging import Logger
 
 from httpx import HTTPStatusError
 from sqlalchemy import Engine
@@ -16,16 +16,15 @@ from police_api_ingester.models import (
 )
 from police_api_ingester.police_client import PoliceClient
 from police_api_ingester.repositories.force_repository import ForceRepository
+from police_api_ingester.repositories.repository import Repository
 
 
-class AvailableDateRepository:
+class AvailableDateRepository(Repository):
     def __init__(
         self, engine: Engine, police_client: PoliceClient, logger: Logger | None = None
     ):
+        super().__init__(engine, police_client, logger)
         self.force_repository = ForceRepository(engine, police_client)
-        self.police_client = police_client
-        self.engine = engine
-        self.logger = logger or getLogger("AvailableDateRepository")
 
     async def store_available_dates(
         self, from_date: datetime, to_date: datetime
