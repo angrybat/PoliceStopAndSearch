@@ -1,6 +1,6 @@
 from typer import Typer
 
-from .commands import ingest_commands
+from police_api_ingester.commands import ingest_commands, schedule_commands
 
 app = Typer()
 
