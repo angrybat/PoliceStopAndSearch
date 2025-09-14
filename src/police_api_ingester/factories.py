@@ -9,9 +9,11 @@ from police_api_ingester.police_client import PoliceClient
 from police_api_ingester.repositories.repository import Repository
 
 
-def get_logger(log_file_path: str):
+def get_logger(log_file_path: str, log_level: int):
     fileConfig(log_file_path)
-    return getLogger()
+    logger = getLogger()
+    logger.setLevel(log_level)
+    return logger
 
 
 def get_police_client(
@@ -35,6 +37,7 @@ T = TypeVar("T", bound=Repository)
 
 def create_repository(
     repository: type[T],
+    log_level: int,
     log_file_path: str,
     database_url: str,
     police_client_base_url: str,
@@ -42,7 +45,7 @@ def create_repository(
     police_client_max_request_retries: int,
     police_client_timeout: int,
 ) -> T:
-    logger = get_logger(log_file_path)
+    logger = get_logger(log_file_path, log_level)
     engine = create_engine(database_url)
     police_client = get_police_client(
         logger,

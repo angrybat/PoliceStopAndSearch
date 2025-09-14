@@ -1,5 +1,8 @@
 from datetime import datetime, timezone
-from logging import getLogger
+from logging import (
+    getLevelNamesMapping,
+    getLogger,
+)
 
 from croniter import croniter
 from typer import BadParameter
@@ -11,6 +14,8 @@ CRON_EXAMPLE = (
     "This cron job runs every 5 minutes, at midnight, on the 1st and 15th of each month,"
     " but only if that day is a weekday (Monday to Friday)."
 )
+
+LOG_LEVEL_NAME_MAPPINGS = getLevelNamesMapping()
 
 logger = getLogger()
 
@@ -37,3 +42,14 @@ def default_timezone_to_utc(value: datetime) -> datetime:
         logger.info("Timezone not provided assuming UTC")
         return value.astimezone(timezone.utc)
     return value
+
+
+def parse_log_level(
+    log_level: str,
+) -> int:
+    try:
+        return LOG_LEVEL_NAME_MAPPINGS[log_level.upper()]
+    except KeyError:
+        raise BadParameter(
+            f"'{log_level}' is an invalid log level. it must be set to one of 'notset', 'debug', 'info', 'warning', 'error', 'critial'"
+        )

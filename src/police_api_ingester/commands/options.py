@@ -1,4 +1,5 @@
 from datetime import datetime
+from logging import INFO
 
 from typer import Option
 
@@ -6,6 +7,7 @@ from police_api_ingester.commands.parsers import (
     CRON_EXAMPLE,
     default_timezone_to_utc,
     parse_cron,
+    parse_log_level,
 )
 from police_api_ingester.models.cron import Cron
 from police_api_ingester.police_client import BASE_URL
@@ -63,4 +65,12 @@ POLICE_CLIENT_TIMEOUT: int = Option(
     "--timeout",
     help="The max number of seconds to wait for a request to the Police API before timing out",
     envvar="POLICE_CLIENT_TIMEOUT",
+)
+LOG_LEVEL: int = Option(
+    INFO,
+    "--log-level",
+    help="The level to set the logger to, this overrides the logging.conf file. Must be set to 1 of 'notset', 'debug', 'info', 'warning', 'error', 'critical'",
+    envvar="LOG_LEVEL",
+    parser=parse_log_level,
+    metavar="[notset,debug,info,warning,error,critical]",
 )

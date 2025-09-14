@@ -14,6 +14,7 @@ from police_api_ingester.commands.options import (
     DATABASE_URL,
     FROM_DATE,
     INGEST_AVAILABLE_DATES,
+    LOG_LEVEL,
     LOGGING_CONF_FILE_PATH,
     POLICE_CLIENT_BASE_URL,
     POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -50,6 +51,7 @@ def schedule_ingest_forces(
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
     police_client_timeout: int = POLICE_CLIENT_TIMEOUT,
+    log_level: int = LOG_LEVEL,
     logging_conf_file_path: str = LOGGING_CONF_FILE_PATH,
 ) -> None:
     schedule_function(
@@ -60,6 +62,7 @@ def schedule_ingest_forces(
         police_client_max_requests_per_seconds=police_client_max_requests_per_seconds,
         police_client_max_request_retries=police_client_max_request_retries,
         police_client_timeout=police_client_timeout,
+        log_level=log_level,
         logging_conf_file_path=logging_conf_file_path,
     )
 
@@ -74,6 +77,7 @@ def schedule_ingest_available_dates(
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
     police_client_timeout: int = POLICE_CLIENT_TIMEOUT,
+    log_level: int = LOG_LEVEL,
     logging_conf_file_path: str = LOGGING_CONF_FILE_PATH,
 ) -> None:
     schedule_function(
@@ -86,6 +90,7 @@ def schedule_ingest_available_dates(
         police_client_max_requests_per_seconds=police_client_max_requests_per_seconds,
         police_client_max_request_retries=police_client_max_request_retries,
         police_client_timeout=police_client_timeout,
+        log_level=log_level,
         logging_conf_file_path=logging_conf_file_path,
     )
 
@@ -100,8 +105,9 @@ def schedule_stop_and_searches_available_dates(
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
     police_client_timeout: int = POLICE_CLIENT_TIMEOUT,
-    logging_conf_file_path: str = LOGGING_CONF_FILE_PATH,
     ingest_available_dates: bool = INGEST_AVAILABLE_DATES,
+    log_level: int = LOG_LEVEL,
+    logging_conf_file_path: str = LOGGING_CONF_FILE_PATH,
 ) -> None:
     schedule_function(
         cron,
@@ -112,7 +118,8 @@ def schedule_stop_and_searches_available_dates(
         police_client_base_url=police_client_base_url,
         police_client_max_requests_per_seconds=police_client_max_requests_per_seconds,
         police_client_max_request_retries=police_client_max_request_retries,
-        police_client_timeout=police_client_timeout,
-        logging_conf_file_path=logging_conf_file_path,
         ingest_available_dates=ingest_available_dates,
+        police_client_timeout=police_client_timeout,
+        log_level=log_level,
+        logging_conf_file_path=logging_conf_file_path,
     )

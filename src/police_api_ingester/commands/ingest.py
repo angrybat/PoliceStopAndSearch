@@ -7,6 +7,8 @@ from typer import Typer
 from police_api_ingester.commands.options import (
     DATABASE_URL,
     FROM_DATE,
+    INGEST_AVAILABLE_DATES,
+    LOG_LEVEL,
     LOGGING_CONF_FILE_PATH,
     POLICE_CLIENT_BASE_URL,
     POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -35,10 +37,12 @@ def ingest_forces(
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
     police_client_timeout: int = POLICE_CLIENT_TIMEOUT,
+    log_level: int = LOG_LEVEL,
     logging_conf_file_path: str = LOGGING_CONF_FILE_PATH,
 ) -> None:
     force_repository = create_repository(
         ForceRepository,
+        log_level,
         logging_conf_file_path,
         database_url,
         police_client_base_url,
@@ -58,10 +62,12 @@ def ingest_available_dates(
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
     police_client_timeout: int = POLICE_CLIENT_TIMEOUT,
+    log_level: int = LOG_LEVEL,
     logging_conf_file_path: str = LOGGING_CONF_FILE_PATH,
 ) -> None:
     available_date_repository = create_repository(
         AvailableDateRepository,
+        log_level,
         logging_conf_file_path,
         database_url,
         police_client_base_url,
@@ -81,10 +87,13 @@ def ingest_stop_and_searches(
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
     police_client_timeout: int = POLICE_CLIENT_TIMEOUT,
+    ingest_available_dates: bool = INGEST_AVAILABLE_DATES,
+    log_level: int = LOG_LEVEL,
     logging_conf_file_path: str = LOGGING_CONF_FILE_PATH,
 ) -> None:
     stop_and_search_repository = create_repository(
         StopAndSearchRepository,
+        log_level,
         logging_conf_file_path,
         database_url,
         police_client_base_url,
