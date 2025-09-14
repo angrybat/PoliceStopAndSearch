@@ -15,7 +15,9 @@ dependencies = [
   "psycopg2-binary==2.9.10",
   "httpx==0.28.1",
   "aiolimiter==1.2.1",
-  "typer==0.17.4"
+  "typer==0.17.4",
+  "croniter=="6.0.0",
+  "apscheduler=="3.11.0",
 ]
 
 [project.optional-dependencies]
