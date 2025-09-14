@@ -1,6 +1,5 @@
 from asyncio import gather
 from collections.abc import Coroutine
-from datetime import datetime
 from typing import Annotated
 
 from dagger import (
@@ -23,26 +22,38 @@ DATETIME_FORMAT = "[%Y-%m-%d|%Y-%m-%dT%H:%M:%S|%Y-%m-%d %H:%M:%S]"
 DEFAULT_FROM_DATE = "2024-01-01"
 DEFAULT_TO_DATE = "2024-04-01"
 
-POSTGRES_TAG_DOC = Doc("Tag of the postgres image")
-PYTHON_TAG_DOC = Doc("Tag of the python image")
-USERNAME_DOC = Doc("Username of the superuser")
-PASSWORD_DOC = Doc("Password of the superuser")
-DATABASE_NAME_DOC = Doc("Name of the database created")
-SOURCE_DOC = Doc("Source directory containing the codebase")
-CACHE_VOLUME_DOC = Doc("Name of the cache volume to use")
-BACKUP_FILE_DOC = Doc("A postgres backup file to restore from")
+POSTGRES_TAG_DOC = Doc("Tag of the postgres image.")
+PYTHON_TAG_DOC = Doc("Tag of the python image.")
+USERNAME_DOC = Doc("Username of the superuser.")
+PASSWORD_DOC = Doc("Password of the superuser.")
+DATABASE_NAME_DOC = Doc("Name of the database created.")
+SOURCE_DOC = Doc("Source directory containing the codebase.")
+BACKUP_FILE_DOC = Doc("A postgres backup file to restore from.")
 AVAILABLE_DATE_FROM_DATE_DOC = Doc(
-    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest available dates from"
+    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest available dates from."
 )
 AVAILABLE_DATE_TO_DATE_DOC = Doc(
-    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest available dates to"
+    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest available dates to."
 )
 STOP_AND_SEARCHES_FROM_DATE_DOC = Doc(
-    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest stop and searches from"
+    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest stop and searches from."
 )
 STOP_AND_SEARCHES_TO_DATE_DOC = Doc(
-    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest stop and searches to"
+    f"The inclusive datetime in the format '{DATETIME_FORMAT}' to ingest stop and searches to."
 )
+POLICE_CLIENT_BASE_URL_DOC = Doc(
+    "Passes this value as to the --base-url option in the ingester"
+)
+POLICE_CLIENT_MAX_REQUESTS_PER_SECOND_DOC = Doc(
+    "Passes this value as to the --max-requests-per-second option in the ingester."
+)
+POLICE_CLIENT_MAX_REQUEST_RETRIES_DOC = Doc(
+    "Passes this value as to the --max-request-retries option in the ingester."
+)
+POLICE_CLIENT_TIMEOUT_DOC = Doc(
+    "Passes this value as to the --timeout option in the ingester."
+)
+LOG_LEVEL_DOC = Doc("Passes this value as to the --log-level option in the ingester.")
 
 
 @object_type
@@ -83,25 +94,27 @@ class PoliceApiIngester:
         return dag.container().from_(f"postgres:{tag}")
 
     @function
-    async def production_dependencies(
+    async def production_api_ingester(
         self,
         source: Annotated[Directory, SOURCE_DOC],
         tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
     ) -> Container:
-        """Returns a container with the production dependencies installed
+        """Returns a Police API ingester with the production dependencies installed
         This uses a cache volume to prevent re-installing packages on each call"""
         container = await self.create_python_container(
-            source, tag, "production_pip_cache"
+            source,
+            tag,
+            "production_pip_cache",
         )
         return self.install_requirements(container, source)
 
     @function
-    async def development_dependencies(
+    async def development_api_ingester(
         self,
         source: Annotated[Directory, SOURCE_DOC],
         tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
     ) -> Container:
-        """Returns a container with the production and development dependencies installed
+        """Returns a Police API ingester with the production and development dependencies installed along with the tests.
         This uses a cache volume to prevent re-installing packages on each call."""
         container = await self.create_python_container(source, tag, "dev_pip_cache")
         return self.install_requirements(container, source, ["dev"]).with_directory(
@@ -115,7 +128,7 @@ class PoliceApiIngester:
         tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
     ) -> str:
         """Runs the unit tests for the project and outputs the results in the terminal"""
-        container = await self.development_dependencies(source, tag)
+        container = await self.development_api_ingester(source, tag)
         return (
             await container.with_mounted_cache(
                 "/app/.pytest_cache", dag.cache_volume("unit_pytest_cache"), owner=USER
@@ -136,7 +149,7 @@ class PoliceApiIngester:
     ) -> str:
         """Runs the integration tests for the project and outputs the results in the terminal"""
         container, postgres_container = await gather(
-            self.development_dependencies(source, python_tag),
+            self.development_api_ingester(source, python_tag),
             self.postgres(source, postgres_tag, username, password, database_name),
         )
         postgres_service = postgres_container.as_service(use_entrypoint=True)
@@ -167,7 +180,7 @@ class PoliceApiIngester:
     ) -> File:
         """Returns postgres backup file for the bronze database tables"""
         development_container, postgres_container = await gather(
-            self.development_dependencies(source, python_tag),
+            self.development_api_ingester(source, python_tag),
             self.postgres(source, postgres_tag, username, password, database_name),
         )
         postgres_service = postgres_container.as_service(use_entrypoint=True)
@@ -218,16 +231,29 @@ class PoliceApiIngester:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+        police_client_base_url: Annotated[
+            str | None, POLICE_CLIENT_BASE_URL_DOC
+        ] = None,
+        police_client_max_requests_per_seconds: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUESTS_PER_SECOND_DOC
+        ] = None,
+        police_client_max_request_retries: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUEST_RETRIES_DOC
+        ] = None,
+        police_client_timeout: Annotated[int | None, POLICE_CLIENT_TIMEOUT_DOC] = None,
+        log_level: Annotated[str | None, LOG_LEVEL_DOC] = None,
     ) -> File:
         """Returns postgres backup file for the bronze database tables with the forces ingested"""
-        bronze_database = await self.ingest_data_into_bronze(
+        command = self.create_command(
             ["forces"],
-            source,
-            python_tag,
-            postgres_tag,
-            username,
-            password,
-            database_name,
+            police_client_base_url,
+            police_client_max_requests_per_seconds,
+            police_client_max_request_retries,
+            police_client_timeout,
+            log_level,
+        )
+        bronze_database = await self.ingest_data_into_bronze(
+            command, source, python_tag, postgres_tag, username, password, database_name
         )
         return await self.backup_postgres_database(
             bronze_database,
@@ -247,10 +273,31 @@ class PoliceApiIngester:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+        police_client_base_url: Annotated[
+            str | None, POLICE_CLIENT_BASE_URL_DOC
+        ] = None,
+        police_client_max_requests_per_seconds: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUESTS_PER_SECOND_DOC
+        ] = None,
+        police_client_max_request_retries: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUEST_RETRIES_DOC
+        ] = None,
+        police_client_timeout: Annotated[int | None, POLICE_CLIENT_TIMEOUT_DOC] = None,
+        log_level: Annotated[str | None, LOG_LEVEL_DOC] = None,
     ) -> Container:
         """Returns a postgres container with the bronze database tables and the forces ingested"""
         backup_file = await self.bronze_database_with_forces_backup(
-            source, python_tag, postgres_tag, username, password, database_name
+            source,
+            python_tag,
+            postgres_tag,
+            username,
+            password,
+            database_name,
+            police_client_base_url,
+            police_client_max_requests_per_seconds,
+            police_client_max_request_retries,
+            police_client_timeout,
+            log_level,
         )
         return await self.postgres(
             source, postgres_tag, username, password, database_name, backup_file
@@ -267,21 +314,35 @@ class PoliceApiIngester:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+        police_client_base_url: Annotated[
+            str | None, POLICE_CLIENT_BASE_URL_DOC
+        ] = None,
+        police_client_max_requests_per_seconds: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUESTS_PER_SECOND_DOC
+        ] = None,
+        police_client_max_request_retries: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUEST_RETRIES_DOC
+        ] = None,
+        police_client_timeout: Annotated[int | None, POLICE_CLIENT_TIMEOUT_DOC] = None,
+        log_level: Annotated[str | None, LOG_LEVEL_DOC] = None,
     ) -> File:
         """Returns postgres backup file for the bronze database tables with the available dates ingested"""
-        bronze_database = await self.ingest_data_into_bronze(
+        command = self.create_command(
             [
+                "available-dates",
                 "--from-datetime",
                 from_date,
                 "--to-datetime",
                 to_date,
             ],
-            source,
-            python_tag,
-            postgres_tag,
-            username,
-            password,
-            database_name,
+            police_client_base_url,
+            police_client_max_requests_per_seconds,
+            police_client_max_request_retries,
+            police_client_timeout,
+            log_level,
+        )
+        bronze_database = await self.ingest_data_into_bronze(
+            command, source, python_tag, postgres_tag, username, password, database_name
         )
         return await self.backup_postgres_database(
             bronze_database,
@@ -303,6 +364,17 @@ class PoliceApiIngester:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+        police_client_base_url: Annotated[
+            str | None, POLICE_CLIENT_BASE_URL_DOC
+        ] = None,
+        police_client_max_requests_per_seconds: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUESTS_PER_SECOND_DOC
+        ] = None,
+        police_client_max_request_retries: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUEST_RETRIES_DOC
+        ] = None,
+        police_client_timeout: Annotated[int | None, POLICE_CLIENT_TIMEOUT_DOC] = None,
+        log_level: Annotated[str | None, LOG_LEVEL_DOC] = None,
     ) -> Container:
         """Returns a postgres container with the bronze database tables and the available dates ingested"""
         backup_file = await self.bronze_database_with_available_dates_backup(
@@ -314,6 +386,11 @@ class PoliceApiIngester:
             username,
             password,
             database_name,
+            police_client_base_url,
+            police_client_max_requests_per_seconds,
+            police_client_max_request_retries,
+            police_client_timeout,
+            log_level,
         )
         return await self.postgres(
             source, postgres_tag, username, password, database_name, backup_file
@@ -330,8 +407,19 @@ class PoliceApiIngester:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+        police_client_base_url: Annotated[
+            str | None, POLICE_CLIENT_BASE_URL_DOC
+        ] = None,
+        police_client_max_requests_per_seconds: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUESTS_PER_SECOND_DOC
+        ] = None,
+        police_client_max_request_retries: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUEST_RETRIES_DOC
+        ] = None,
+        police_client_timeout: Annotated[int | None, POLICE_CLIENT_TIMEOUT_DOC] = None,
+        log_level: Annotated[str | None, LOG_LEVEL_DOC] = None,
     ) -> File:
-        """Returns postgres backup file for the bronze database tables with the available dates ingested"""
+        """Returns postgres backup file for the bronze database tables with the stop and searches ingested"""
         get_available_dates_database = self.bronze_database_with_available_dates(
             source,
             from_date,
@@ -342,7 +430,7 @@ class PoliceApiIngester:
             password,
             database_name,
         )
-        bronze_database = await self.ingest_data_into_postgres(
+        command = self.create_command(
             [
                 "stop-and-searches",
                 "--from-datetime",
@@ -351,6 +439,14 @@ class PoliceApiIngester:
                 to_date,
                 "--no-ingest-available-dates",
             ],
+            police_client_base_url,
+            police_client_max_requests_per_seconds,
+            police_client_max_request_retries,
+            police_client_timeout,
+            log_level,
+        )
+        bronze_database = await self.ingest_data_into_postgres(
+            command,
             source,
             python_tag,
             get_available_dates_database,
@@ -378,8 +474,19 @@ class PoliceApiIngester:
         username: Annotated[str, USERNAME_DOC] = "postgres",
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+        police_client_base_url: Annotated[
+            str | None, POLICE_CLIENT_BASE_URL_DOC
+        ] = None,
+        police_client_max_requests_per_seconds: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUESTS_PER_SECOND_DOC
+        ] = None,
+        police_client_max_request_retries: Annotated[
+            int | None, POLICE_CLIENT_MAX_REQUEST_RETRIES_DOC
+        ] = None,
+        police_client_timeout: Annotated[int | None, POLICE_CLIENT_TIMEOUT_DOC] = None,
+        log_level: Annotated[str | None, LOG_LEVEL_DOC] = None,
     ) -> Container:
-        """Returns a postgres container with the bronze database tables and the available dates ingested"""
+        """Returns a postgres container with the bronze database tables and the stop and searches ingested"""
         backup_file = await self.bronze_database_with_stop_and_searchs_backup(
             source,
             from_date,
@@ -389,6 +496,11 @@ class PoliceApiIngester:
             username,
             password,
             database_name,
+            police_client_base_url,
+            police_client_max_requests_per_seconds,
+            police_client_max_request_retries,
+            police_client_timeout,
+            log_level,
         )
         return await self.postgres(
             source, postgres_tag, username, password, database_name, backup_file
@@ -430,6 +542,39 @@ class PoliceApiIngester:
             .without_file("pyproject.toml")
         )
 
+    def create_command(
+        self,
+        base_command: list[str],
+        police_client_base_url: str | None,
+        police_client_max_requests_per_seconds: int | None,
+        police_client_max_request_retries: int | None,
+        police_client_timeout: int | None,
+        log_level: str | None,
+    ) -> list[str]:
+        self.append_optional_option_to_command(
+            base_command, "--base-url", police_client_base_url
+        )
+        self.append_optional_option_to_command(
+            base_command,
+            "--max-requests-per-second",
+            police_client_max_requests_per_seconds,
+        )
+        self.append_optional_option_to_command(
+            base_command, "--max-request-retries", police_client_max_request_retries
+        )
+        self.append_optional_option_to_command(
+            base_command, "--timeout", police_client_timeout
+        )
+        self.append_optional_option_to_command(base_command, "--log-level", log_level)
+        return base_command
+
+    def append_optional_option_to_command(
+        self, command: list[str], option_name: str, option_value: str | int | None
+    ):
+        if option_value:
+            command.append(option_name)
+            command.append(str(option_value))
+
     async def ingest_data_into_postgres(
         self,
         ingest_command: list[str],
@@ -442,7 +587,7 @@ class PoliceApiIngester:
     ) -> Container:
         postgres_database, production_dependencies = await gather(
             get_postgres_database,
-            self.production_dependencies(source, python_tag),
+            self.production_api_ingester(source, python_tag),
         )
         database_service = postgres_database.as_service(use_entrypoint=True)
         command = ["police-api-ingester", "ingest"] + ingest_command
@@ -514,11 +659,3 @@ class PoliceApiIngester:
             .with_exec(["cp", f"/backups/{backup_file}", output_file])
             .file(output_file)
         )
-
-
-def is_valid_date(date_str: str) -> bool:
-    try:
-        datetime.strptime(date_str, DATETIME_FORMAT)
-        return True
-    except ValueError:
-        return False
