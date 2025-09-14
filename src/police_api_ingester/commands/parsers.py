@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
+from logging import getLogger
 
 from croniter import croniter
 from typer import BadParameter
 
-from police_api_ingester.factories import logger
 from police_api_ingester.models.cron import Cron
 
 CRON_EXAMPLE = (
@@ -11,6 +11,8 @@ CRON_EXAMPLE = (
     "This cron job runs every 5 minutes, at midnight, on the 1st and 15th of each month,"
     " but only if that day is a weekday (Monday to Friday)."
 )
+
+logger = getLogger()
 
 
 def parse_cron(cron_str: str) -> Cron:
