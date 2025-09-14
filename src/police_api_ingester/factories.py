@@ -1,68 +1,54 @@
-import logging
-import os
-import sys
-from logging import Logger, basicConfig
+from logging import Logger, getLogger
+from logging.config import fileConfig
+from typing import TypeVar
 
 from httpx import Timeout
 from sqlalchemy import create_engine
 
-from police_api_ingester.police_client import BASE_URL, PoliceClient
-from police_api_ingester.repositories import (
-    AvailableDateRepository,
-    ForceRepository,
-    StopAndSearchRepository,
-)
-
-basicConfig(
-    stream=sys.stdout,
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-
-logger = logging.getLogger()
+from police_api_ingester.police_client import PoliceClient
+from police_api_ingester.repositories.repository import Repository
 
 
-def get_engine(logger: Logger):
-    database_url = os.getenv("DATABASE_URL")
-    if database_url is None:
-        error_message = "Cannot create database engine as the 'DATABASE_URL' enviroment variable is not set."
-        logger.critical(error_message)
-        raise RuntimeError(error_message)
-    engine = create_engine(database_url)
-    return engine
+def get_logger(log_file_path: str):
+    fileConfig(log_file_path)
+    return getLogger()
 
 
-engine = get_engine(logger)
-
-
-def get_police_client(logger: Logger):
-    base_url = os.getenv("POLICE_CLIENT_BASE_URL", BASE_URL)
-    max_requests_per_second = int(
-        os.getenv("POLICE_CLIENT_MAX_REQUESTS_PER_SECOND", 15)
-    )
-    max_request_retries = int(os.getenv("POLICE_CLIENT_MAX_REQUEST_RETRIES", 5))
-    timeout = Timeout(int(os.getenv("POLICE_CLIENT_TIMEOUT", 10)))
-    police_client = PoliceClient(
-        base_url=base_url,
-        timeout=timeout,
+def get_police_client(
+    logger: Logger,
+    police_client_base_url: str,
+    police_client_max_requests_per_seconds: int,
+    police_client_max_request_retries: int,
+    police_client_timeout: int,
+):
+    return PoliceClient(
+        base_url=police_client_base_url,
+        timeout=Timeout(police_client_timeout),
         logger=logger,
-        max_request_retries=max_request_retries,
-        max_requests_per_second=max_requests_per_second,
+        max_request_retries=police_client_max_request_retries,
+        max_requests_per_second=police_client_max_requests_per_seconds,
     )
 
-    return police_client
+
+T = TypeVar("T", bound=Repository)
 
 
-police_client = get_police_client(logger)
-
-
-def get_force_repository():
-    return ForceRepository(engine, police_client, logger)
-
-
-def get_available_date_repository():
-    return AvailableDateRepository(engine, police_client, logger)
-
-
-def get_stop_and_search_repository():
-    return StopAndSearchRepository(engine, police_client, logger)
+def create_repository(
+    repository: type[T],
+    log_file_path: str,
+    database_url: str,
+    police_client_base_url: str,
+    police_client_max_requests_per_seconds: int,
+    police_client_max_request_retries: int,
+    police_client_timeout: int,
+) -> T:
+    logger = get_logger(log_file_path)
+    engine = create_engine(database_url)
+    police_client = get_police_client(
+        logger,
+        police_client_base_url,
+        police_client_max_requests_per_seconds,
+        police_client_max_request_retries,
+        police_client_timeout,
+    )
+    return repository(engine, police_client, logger)
