@@ -256,26 +256,6 @@ class PoliceApiIngester:
             source, postgres_tag, username, password, database_name, backup_file
         )
 
-    async def create_python_container(
-        self, source: Directory, tag: str, cache_volume_name: str
-    ):
-        pip_cache = dag.cache_volume(cache_volume_name)
-        container = (
-            dag.container()
-            .from_(f"python:{tag}")
-            .with_exec(["useradd", "-m", USER])
-            .with_user(USER)
-            .with_directory("/app", dag.directory(), owner=USER)
-            .with_directory(USER_LOCAL_PATH, dag.directory(), owner=USER)
-            .with_directory("/app/src", source.directory("src"), owner=USER)
-            .with_file("/app/pyproject.toml", source.file("pyproject.toml"), owner=USER)
-            .with_env_variable("PIP_CACHE_DIR", PIP_CACHE_PATH)
-            .with_mounted_cache(PIP_CACHE_PATH, pip_cache, owner=USER)
-            .with_workdir("/app")
-        )
-        path = await container.env_variable("PATH")
-        return container.with_env_variable("PATH", f"{USER_HOME}/.local/bin:{path}")
-
     @function
     async def bronze_database_with_available_dates_backup(
         self,
@@ -291,8 +271,9 @@ class PoliceApiIngester:
         """Returns postgres backup file for the bronze database tables with the available dates ingested"""
         bronze_database = await self.ingest_data_into_bronze(
             [
-                "available-dates",
+                "--from-datetime",
                 from_date,
+                "--to-datetime",
                 to_date,
             ],
             source,
@@ -362,7 +343,14 @@ class PoliceApiIngester:
             database_name,
         )
         bronze_database = await self.ingest_data_into_postgres(
-            ["stop-and-searches", from_date, to_date, "--no-run-store-available-dates"],
+            [
+                "stop-and-searches",
+                "--from-datetime",
+                from_date,
+                "--to-datetime",
+                to_date,
+                "--no-ingest-available-dates",
+            ],
             source,
             python_tag,
             get_available_dates_database,
@@ -405,6 +393,26 @@ class PoliceApiIngester:
         return await self.postgres(
             source, postgres_tag, username, password, database_name, backup_file
         )
+
+    async def create_python_container(
+        self, source: Directory, tag: str, cache_volume_name: str
+    ):
+        pip_cache = dag.cache_volume(cache_volume_name)
+        container = (
+            dag.container()
+            .from_(f"python:{tag}")
+            .with_exec(["useradd", "-m", USER])
+            .with_user(USER)
+            .with_directory("/app", dag.directory(), owner=USER)
+            .with_directory(USER_LOCAL_PATH, dag.directory(), owner=USER)
+            .with_directory("/app/src", source.directory("src"), owner=USER)
+            .with_file("/app/pyproject.toml", source.file("pyproject.toml"), owner=USER)
+            .with_env_variable("PIP_CACHE_DIR", PIP_CACHE_PATH)
+            .with_mounted_cache(PIP_CACHE_PATH, pip_cache, owner=USER)
+            .with_workdir("/app")
+        )
+        path = await container.env_variable("PATH")
+        return container.with_env_variable("PATH", f"{USER_HOME}/.local/bin:{path}")
 
     def install_requirements(
         self,
