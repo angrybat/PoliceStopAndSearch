@@ -12,12 +12,6 @@ from police_api_ingester.factories import (
 ingest = Typer()
 
 
-def default_timezone_to_utc(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value.astimezone(timezone.utc)
-    return value
-
-
 @ingest.command("forces")
 def ingest_forces() -> None:
     force_repository = get_force_repository()
