@@ -43,7 +43,10 @@ def schedule_function(cron: Cron, func: Callable, **kwargs) -> None:
     scheduler.start()
 
 
-@schedule.command("forces")
+@schedule.command(
+    "forces",
+    help="Schedules the ingest of Police Forces into the bronze database using the Police API",
+)
 def schedule_ingest_forces(
     cron: Annotated[Cron, CRON],
     database_url: Annotated[str, DATABASE_URL],
@@ -67,7 +70,10 @@ def schedule_ingest_forces(
     )
 
 
-@schedule.command("available-dates")
+@schedule.command(
+    "available-dates",
+    help="Schedules the ingest of the dates that have available stop and searches into the bronze database using the Police API. This will ingest the forces first.",
+)
 def schedule_ingest_available_dates(
     cron: Annotated[Cron, CRON],
     from_datetime: Annotated[datetime, FROM_DATE],
@@ -95,7 +101,10 @@ def schedule_ingest_available_dates(
     )
 
 
-@schedule.command("stop-and-searches")
+@schedule.command(
+    "stop-and-searches",
+    help="Schedules the ingest of the stop and searches into the bronze database using the Police API. By default this will ingest the available dates and forces into the database.",
+)
 def schedule_stop_and_searches_available_dates(
     cron: Annotated[Cron, CRON],
     from_datetime: Annotated[datetime, FROM_DATE],

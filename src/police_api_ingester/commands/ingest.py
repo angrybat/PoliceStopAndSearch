@@ -30,7 +30,10 @@ from police_api_ingester.repositories.stop_and_search_repository import (
 ingest = Typer()
 
 
-@ingest.command("forces")
+@ingest.command(
+    "forces",
+    help="Ingests the Police Forces into the bronze database using the Police API",
+)
 def ingest_forces(
     database_url: Annotated[str, DATABASE_URL],
     police_client_base_url: str = POLICE_CLIENT_BASE_URL,
@@ -53,7 +56,10 @@ def ingest_forces(
     run(force_repository.store_forces())
 
 
-@ingest.command("available-dates")
+@ingest.command(
+    "available-dates",
+    help="Ingests the dates that have available stop and searches into the bronze database using the Police API. This will ingest the forces first.",
+)
 def ingest_available_dates(
     from_datetime: Annotated[datetime, FROM_DATE],
     to_datetime: Annotated[datetime, TO_DATE],
@@ -78,7 +84,10 @@ def ingest_available_dates(
     run(available_date_repository.store_available_dates(from_datetime, to_datetime))
 
 
-@ingest.command("stop-and-searches")
+@ingest.command(
+    "stop-and-searches",
+    help="Ingests the stop and searches into the bronze database using the Police API. By default this will ingest the available dates and forces into the database.",
+)
 def ingest_stop_and_searches(
     from_datetime: Annotated[datetime, FROM_DATE],
     to_datetime: Annotated[datetime, TO_DATE],
