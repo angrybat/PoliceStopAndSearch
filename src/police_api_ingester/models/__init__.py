@@ -13,3 +13,4 @@ from police_api_ingester.models.bronze import (
 from police_api_ingester.models.bronze import (
     StopAndSearch as StopAndSearch,
 )
+from police_api_ingester.models.cron import Cron as Cron
