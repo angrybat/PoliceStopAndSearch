@@ -3,6 +3,7 @@ import os
 import sys
 from logging import Logger, basicConfig
 
+from httpx import Timeout
 from sqlalchemy import create_engine
 
 from police_api_ingester.police_client import BASE_URL, PoliceClient
@@ -35,11 +36,15 @@ engine = get_engine(logger)
 
 
 def get_police_client(logger: Logger):
-    base_url = os.getenv("POLICE_API_BASE_URL", BASE_URL)
-    max_requests_per_second = int(os.getenv("POLICE_API_MAX_REQUESTS_PER_SECOND", 15))
-    max_request_retries = int(os.getenv("POLICE_API_MAX_REQUEST_RETRIES", 5))
+    base_url = os.getenv("POLICE_CLIENT_BASE_URL", BASE_URL)
+    max_requests_per_second = int(
+        os.getenv("POLICE_CLIENT_MAX_REQUESTS_PER_SECOND", 15)
+    )
+    max_request_retries = int(os.getenv("POLICE_CLIENT_MAX_REQUEST_RETRIES", 5))
+    timeout = Timeout(int(os.getenv("POLICE_CLIENT_TIMEOUT", 10)))
     police_client = PoliceClient(
         base_url=base_url,
+        timeout=timeout,
         logger=logger,
         max_request_retries=max_request_retries,
         max_requests_per_second=max_requests_per_second,

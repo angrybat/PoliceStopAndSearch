@@ -4,7 +4,8 @@ from logging import Logger, getLogger
 from typing import TypeVar
 
 from aiolimiter import AsyncLimiter
-from httpx import AsyncClient, HTTPStatusError, Response
+from httpx import AsyncClient, HTTPStatusError, ReadTimeout, Response, Timeout
+from httpx._client import DEFAULT_TIMEOUT_CONFIG
 from pydantic_core import ValidationError
 from sqlmodel import SQLModel
 
@@ -25,6 +26,7 @@ class PoliceClient(AsyncClient):
     def __init__(
         self,
         base_url: str = BASE_URL,
+        timeout: Timeout = DEFAULT_TIMEOUT_CONFIG,
         logger: Logger | None = None,
         max_requests_per_second: int = 15,
         max_request_retries: int = 5,
@@ -32,7 +34,7 @@ class PoliceClient(AsyncClient):
         self.logger = logger or getLogger("PoliceClient")
         self.limiter = AsyncLimiter(1, ONE_SECOND / max_requests_per_second)
         self.max_request_retries = max_request_retries
-        super().__init__(base_url=base_url)
+        super().__init__(base_url=base_url, timeout=timeout)
 
     async def get_forces(self) -> list[Force]:
         forces = await self._get_response_body(
@@ -80,7 +82,16 @@ class PoliceClient(AsyncClient):
         retries = 0
         while retries < self.max_request_retries:
             async with self.limiter:
-                response = await self.get(route)
+                try:
+                    response = await self.get(route)
+                except ReadTimeout:
+                    self.logger.warning(
+                        "The API caused a read time out."
+                        f"Currently at attempt '{retries}' of '{self.max_request_retries}'."
+                        " Retrying..."
+                    )
+                    retries += 1
+                    continue
             if response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
                 return response
             retries += 1
