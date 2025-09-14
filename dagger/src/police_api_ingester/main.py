@@ -519,6 +519,7 @@ class PoliceApiIngester:
             .with_directory(USER_LOCAL_PATH, dag.directory(), owner=USER)
             .with_directory("/app/src", source.directory("src"), owner=USER)
             .with_file("/app/pyproject.toml", source.file("pyproject.toml"), owner=USER)
+            .with_file("/app/logging.conf", source.file("logging.conf"), owner=USER)
             .with_env_variable("PIP_CACHE_DIR", PIP_CACHE_PATH)
             .with_mounted_cache(PIP_CACHE_PATH, pip_cache, owner=USER)
             .with_workdir("/app")
