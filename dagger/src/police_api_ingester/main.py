@@ -85,10 +85,57 @@ class PoliceApiIngester:
     ) -> Container:
         """Returns a container with the production and development dependencies installed
         This uses a cache volume to prevent re-installing packages on each call."""
-        container = await self.create_python_container(
-            source, tag, "development_pip_cache"
+        container = await self.create_python_container(source, tag, "dev_pip_cache")
+        return self.install_requirements(container, source, ["dev"]).with_directory(
+            "/app/tests", source.directory("tests")
         )
-        return self.install_requirements(container, source, ["dev"])
+
+    @function
+    async def unit_test(
+        self,
+        source: Annotated[Directory, SOURCE_DOC],
+        tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
+    ) -> str:
+        """Runs the unit tests for the project and outputs the results in the terminal"""
+        container = await self.development_dependencies(source, tag)
+        return (
+            await container.with_mounted_cache(
+                "/app/.pytest_cache", dag.cache_volume("unit_pytest_cache"), owner=USER
+            )
+            .with_exec(["pytest", "tests/test_unit"])
+            .stdout()
+        )
+
+    @function
+    async def integration_test(
+        self,
+        source: Annotated[Directory, SOURCE_DOC],
+        python_tag: Annotated[str, PYTHON_TAG_DOC] = "3.12-slim-bookworm",
+        postgres_tag: Annotated[str, POSTGRES_TAG_DOC] = "17.6-bookworm",
+        username: Annotated[str, USERNAME_DOC] = "postgres",
+        password: Annotated[str, PASSWORD_DOC] = "password",
+        database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
+    ) -> str:
+        """Runs the integration tests for the project and outputs the results in the terminal"""
+        container, postgres_container = await gather(
+            self.development_dependencies(source, python_tag),
+            self.postgres(source, postgres_tag, username, password, database_name),
+        )
+        postgres_service = postgres_container.as_service(use_entrypoint=True)
+        return (
+            await container.with_service_binding("postgres", postgres_service)
+            .with_mounted_cache(
+                "/app/.pytest_cache",
+                dag.cache_volume("integration_pytest_cache"),
+                owner=USER,
+            )
+            .with_env_variable(
+                "DATABASE_URL",
+                f"postgresql+psycopg2://{username}:{password}@postgres/{database_name}",
+            )
+            .with_exec(["pytest", "tests/test_integration"])
+            .stdout()
+        )
 
     @function
     async def bronze_database_backup(
