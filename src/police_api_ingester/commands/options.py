@@ -50,8 +50,8 @@ POLICE_CLIENT_BASE_URL: str = Option(
 )
 POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS: int = Option(
     15,
-    "--max-requests-per-seconds",
-    help="The max number of requests per seconds that can be made to the Police API.",
+    "--max-requests-per-second",
+    help="The max number of requests per second that can be made to the Police API.",
     envvar="POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS",
 )
 POLICE_CLIENT_MAX_REQUEST_RETRIES: int = Option(
