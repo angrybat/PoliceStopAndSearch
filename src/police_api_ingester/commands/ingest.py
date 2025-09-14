@@ -18,13 +18,13 @@ def store_forces_in_bronze() -> None:
     run(force_repository.store_forces())
 
 
-@ingest.command("available_dates")
+@ingest.command("available-dates")
 def store_available_dates(from_datetime: datetime, to_datetime: datetime) -> None:
     available_date_repository = get_available_date_repository()
     run(available_date_repository.store_available_dates(from_datetime, to_datetime))
 
 
-@ingest.command("stop_and_searches")
+@ingest.command("stop-and-searches")
 def store_stop_and_searches(
     from_datetime: datetime,
     to_datetime: datetime,
