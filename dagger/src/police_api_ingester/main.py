@@ -25,7 +25,7 @@ USER_HOME = f"/home/{USER}"
 USER_LOCAL_PATH = f"{USER_HOME}/.local"
 PIP_CACHE_PATH = f"{USER_HOME}/.cache/pip"
 POSTGRES_BACKUPS_DIRECTORY = "/backups"
-POSTGRES_BACKUP_FILE = f"{POSTGRES_BACKUPS_DIRECTORY}/backup.sql"
+POSTGRES_BACKUPS_CACHE = "postgres_backups"
 
 
 @object_type
@@ -148,37 +148,16 @@ class PoliceApiIngester:
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
     ) -> File:
-        """Returns postgres backup file with for the bronze database tables"""
-        development_container, postgres_container, backup_container = await gather(
-            self.development_dependencies(source, python_tag),
-            self.postgres(source, postgres_tag, username, password, database_name),
-            self.postgres_container(postgres_tag),
+        """Returns postgres backup file for the bronze database tables"""
+        return await self.backup_postgres_database(
+            source,
+            python_tag,
+            postgres_tag,
+            username,
+            password,
+            database_name,
+            "bronze.sql",
         )
-        postgres_service = postgres_container.as_service(use_entrypoint=True)
-        await (
-            development_container.with_service_binding("postgres", postgres_service)
-            .with_env_variable(
-                "DATABASE_URL",
-                f"postgresql+psycopg2://{username}:{password}@postgres/{database_name}",
-            )
-            .with_directory("/app/alembic", source.directory("alembic"))
-            .with_file("/app/alembic.ini", source.file("alembic.ini"))
-            .with_exec(["alembic", "upgrade", "fb1ef6ecc640"])
-            .sync()
-        )
-        backup_container = await (
-            backup_container.with_service_binding("postgres", postgres_service)
-            .with_exec(
-                [
-                    "pg_dump",
-                    f"postgresql://{username}:{password}@postgres/{database_name}",
-                    "-f",
-                    "backup.sql",
-                ]
-            )
-            .sync()
-        )
-        return backup_container.file("backup.sql")
 
     @function
     async def bronze_database(
@@ -190,6 +169,7 @@ class PoliceApiIngester:
         password: Annotated[str, PASSWORD_DOC] = "password",
         database_name: Annotated[str, DATABASE_NAME_DOC] = "postgres",
     ) -> Container:
+        """Returns a postgres container with the bronze database tables"""
         backup_file = await self.bronze_database_backup(
             source, python_tag, postgres_tag, username, password, database_name
         )
@@ -231,4 +211,55 @@ class PoliceApiIngester:
             container.with_file("pyproject.toml", source.file("pyproject.toml"))
             .with_exec(["pip", "install", "--user", dependencies])
             .without_file("pyproject.toml")
+        )
+
+    async def backup_postgres_database(
+        self,
+        source: Directory,
+        python_tag: str,
+        postgres_tag: str,
+        username: str,
+        password: str,
+        database_name: str,
+        backup_file: str,
+    ) -> File:
+        development_container, postgres_container, backup_container = await gather(
+            self.development_dependencies(source, python_tag),
+            self.postgres(source, postgres_tag, username, password, database_name),
+            self.postgres_container(postgres_tag),
+        )
+        postgres_service = postgres_container.as_service(use_entrypoint=True)
+        await (
+            development_container.with_service_binding("postgres", postgres_service)
+            .with_env_variable(
+                "DATABASE_URL",
+                f"postgresql+psycopg2://{username}:{password}@postgres/{database_name}",
+            )
+            .with_directory("/app/alembic", source.directory("alembic"))
+            .with_file("/app/alembic.ini", source.file("alembic.ini"))
+            .with_exec(["alembic", "upgrade", "fb1ef6ecc640"])
+            .sync()
+        )
+        backup_container = await (
+            backup_container.with_service_binding("postgres", postgres_service)
+            .with_mounted_cache(
+                POSTGRES_BACKUPS_DIRECTORY,
+                dag.cache_volume(POSTGRES_BACKUPS_CACHE),
+                owner=username,
+            )
+            .with_exec(
+                [
+                    "pg_dump",
+                    f"postgresql://{username}:{password}@postgres/{database_name}",
+                    "-f",
+                    f"{POSTGRES_BACKUPS_DIRECTORY}/{backup_file}",
+                ]
+            )
+            .sync()
+        )
+        output_file = f"/output/{backup_file}"
+        return (
+            backup_container.with_directory("/output", dag.directory())
+            .with_exec(["cp", f"/backups/{backup_file}", output_file])
+            .file(output_file)
         )
