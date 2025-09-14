@@ -6,6 +6,12 @@ from typer import BadParameter
 from police_api_ingester.factories import logger
 from police_api_ingester.models.cron import Cron
 
+CRON_EXAMPLE = (
+    "For example: '*/5 0 1,15 * 1-5'. "
+    "This cron job runs every 5 minutes, at midnight, on the 1st and 15th of each month,"
+    " but only if that day is a weekday (Monday to Friday)."
+)
+
 
 def parse_cron(cron_str: str) -> Cron:
     if croniter.is_valid(cron_str):
@@ -20,9 +26,7 @@ def parse_cron(cron_str: str) -> Cron:
     raise BadParameter(
         f"'{cron_str}' is an invalid cron string. "
         "The expected string should contian 5 fields (minute hour day month weekday)."
-        " For example: '*/5 0 1,15 * 1-5'. "
-        "This cron job runs every 5 minutes, at midnight, on the 1st and 15th of each month,"
-        " but only if that day is a weekday (Monday to Friday)."
+        + CRON_EXAMPLE
     )
 
 
