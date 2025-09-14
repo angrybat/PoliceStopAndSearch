@@ -34,7 +34,7 @@ def upgrade() -> None:
     op.create_table(
         "Force",
         sa.Column("Id", sa.String(length=20), nullable=False),
-        sa.Column("Name", sa.String(), nullable=False),
+        sa.Column("Name", sa.String(), nullable=True),
         sa.PrimaryKeyConstraint("Id"),
         schema="bronze",
     )
@@ -68,7 +68,7 @@ def upgrade() -> None:
         sa.Column("StreetName", sa.String(), nullable=True),
         sa.Column("Gender", sa.String(), nullable=True),
         sa.Column("AgeRange", sa.String(), nullable=True),
-        sa.Column("SelfDefinedEthnicity", sa.String(), nullable=False),
+        sa.Column("SelfDefinedEthnicity", sa.String(), nullable=True),
         sa.Column("OfficerDefinedEthnicity", sa.String(), nullable=True),
         sa.Column("Legislation", sa.String(), nullable=True),
         sa.Column("ObjectOfSearch", sa.String(), nullable=True),
@@ -81,7 +81,6 @@ def upgrade() -> None:
             ["bronze.Force.Id"],
         ),
         sa.PrimaryKeyConstraint("Id"),
-        sa.UniqueConstraint("Type"),
         schema="bronze",
     )
     # ### end Alembic commands ###
