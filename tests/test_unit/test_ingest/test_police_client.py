@@ -53,6 +53,25 @@ class TestGetForces:
         mock_get.assert_called_once_with("forces")
 
     @pytest.mark.asyncio
+    async def test_filters_forces_by_id(self):
+        police_client = PoliceClient()
+        returned_forces = [
+            {"id": "force1", "name": "Force One"},
+            {"id": "force2", "name": "Force Two"},
+        ]
+        mock_response = Mock()
+        mock_response.json.return_value = returned_forces
+        mock_get = AsyncMock(return_value=mock_response)
+        police_client.rate_limited_get = mock_get
+
+        forces = await police_client.get_forces(["force1"])
+
+        assert forces == [
+            Force(id="force1", name="Force One"),
+        ]
+        mock_get.assert_called_once_with("forces")
+
+    @pytest.mark.asyncio
     async def test_logs_error_on_request_failure(self, caplog: LogCaptureFixture):
         police_client = PoliceClient()
         mock_response = Mock()
