@@ -46,6 +46,7 @@ class StopAndSearchRepository(Repository):
                     )
                     for available_date in available_dates
                     for force in available_date.forces
+                    if force.id
                 ]
             )
             return all(results)
