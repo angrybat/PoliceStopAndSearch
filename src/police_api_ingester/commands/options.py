@@ -1,5 +1,4 @@
 from datetime import datetime
-from logging import INFO
 
 from typer import Option
 
@@ -67,7 +66,7 @@ POLICE_CLIENT_TIMEOUT: int = Option(
     envvar="POLICE_CLIENT_TIMEOUT",
 )
 LOG_LEVEL: int = Option(
-    INFO,
+    "info",
     "--log-level",
     help="The level to set the logger to, this overrides the logging.conf file. Must be set to 1 of 'notset', 'debug', 'info', 'warning', 'error', 'critical'",
     envvar="LOG_LEVEL",
