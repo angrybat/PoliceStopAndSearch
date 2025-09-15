@@ -79,25 +79,24 @@ class PoliceClient(AsyncClient):
         return self._map_vailidate_models(StopAndSearch, stop_and_searches)
 
     async def rate_limited_get(self, route: str) -> Response:
-        retries = 0
-        while retries < self.max_request_retries:
+        attempts = 0
+        while attempts < self.max_request_retries:
+            attempts += 1
             async with self.limiter:
                 try:
                     response = await self.get(route)
                 except ReadTimeout:
                     self.logger.warning(
                         "The API caused a read time out."
-                        f"Currently at attempt '{retries}' of '{self.max_request_retries}'."
+                        f"Currently at attempt '{attempts}' of '{self.max_request_retries}'."
                         " Retrying..."
                     )
-                    retries += 1
                     continue
             if response.status_code != HTTPStatus.TOO_MANY_REQUESTS:
                 return response
-            retries += 1
             self.logger.warning(
                 "The rate limit on the API has been exceeded. "
-                f"Currently at attempt '{retries}' of '{self.max_request_retries}'."
+                f"Currently at attempt '{attempts}' of '{self.max_request_retries}'."
                 " Retrying..."
             )
         self.logger.exception(
