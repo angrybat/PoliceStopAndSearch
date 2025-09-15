@@ -1,3 +1,4 @@
+import sys
 from logging import Logger, getLogger
 from logging.config import fileConfig
 from typing import TypeVar
@@ -10,9 +11,12 @@ from police_api_ingester.repositories.repository import Repository
 
 
 def get_logger(log_file_path: str, log_level: int):
-    fileConfig(log_file_path)
+    fileConfig(log_file_path, defaults={"sys": sys})
     logger = getLogger()
     logger.setLevel(log_level)
+    for handler in logger.handlers:
+        handler.setLevel(log_level)
+    logger.info("test")
     return logger
 
 
