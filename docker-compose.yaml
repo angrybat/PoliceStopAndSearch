@@ -16,5 +16,5 @@ services:
       - LOG_LEVEL=info
     depends_on:
       - database
-    entrypoint: ["police-api-ingester", "schedule", stop-and-searches, "--cron-string", "* * * * *", "--from-datetime", "2022-01-01", "--to-datetime", "2030-01-01"]
+    entrypoint: ["police-api-ingester", "schedule", stop-and-searches, "--cron-string", "12 * * * *", "--from-datetime", "2022-01-01", "--to-datetime", "2030-01-01", "--force-ids", "derbyshire,nottinghamshire,leicestershire"]
   
