@@ -17,10 +17,12 @@ class ForceRepository(Repository):
     ):
         super().__init__(engine, police_client, logger)
 
-    async def store_forces(self) -> list[Force] | None:
+    async def store_forces(
+        self, force_ids: list[str] | None = None
+    ) -> list[Force] | None:
         try:
             forces, existing_forces = await gather(
-                self.police_client.get_forces(), self.get_all_forces()
+                self.police_client.get_forces(force_ids), self.get_all_forces()
             )
         except HTTPStatusError:
             return None
