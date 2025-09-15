@@ -27,11 +27,11 @@ class AvailableDateRepository(Repository):
         self.force_repository = ForceRepository(engine, police_client)
 
     async def store_available_dates(
-        self, from_date: datetime, to_date: datetime
+        self, from_date: datetime, to_date: datetime, force_ids: list[str] | None = None
     ) -> bool:
         try:
             forces, available_dates, existing_available_dates = await gather(
-                self.force_repository.store_forces(),
+                self.force_repository.store_forces(force_ids),
                 self.police_client.get_available_dates(from_date, to_date),
                 self.get_available_dates(from_date, to_date, with_forces=True),
             )

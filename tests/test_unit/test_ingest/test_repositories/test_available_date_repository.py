@@ -101,6 +101,46 @@ class TestStoreAvailableDates:
         mock_session.commit.assert_not_called()
 
     @pytest.mark.asyncio
+    async def test_calls_force_repository_is_called_with_correct_force_ids(
+        self,
+        mock_session: Session,
+        available_date_repository: AvailableDateRepository,
+        mock_force_repository: ForceRepository,
+        mock_police_client: PoliceClient,
+    ):
+        forces = [
+            Force(id="force-1", name="Force One"),
+            Force(id="force-2", name="Force Two"),
+            Force(id="force-3", name="Force Three"),
+        ]
+        available_dates = [
+            AvailableDateWithForceIds(
+                **{"date": "2023-02", "stop-and-search": ["force-1"]}
+            ),
+            AvailableDateWithForceIds(
+                **{"date": "2023-03", "stop-and-search": ["force-2"]}
+            ),
+            AvailableDateWithForceIds(
+                **{"date": "2023-04", "stop-and-search": ["force-3"]}
+            ),
+        ]
+        mock_force_repository.store_forces.return_value = forces
+        mock_police_client.get_available_dates.return_value = available_dates
+        available_date_repository.store_available_date = AsyncMock()
+        available_date_repository.get_available_dates = AsyncMock()
+        available_date_repository.get_available_dates.return_value = []
+        available_date_repository.store_available_date.return_value = True
+        from_date = datetime(2023, 1, 1)
+        to_date = datetime(2023, 5, 1)
+
+        success = await available_date_repository.store_available_dates(
+            from_date, to_date, ["force-1"]
+        )
+
+        assert success is True
+        mock_force_repository.store_forces.assert_called_once_with(["force-1"])
+
+    @pytest.mark.asyncio
     async def test_stores_forces_not_returned_from_force_repository(
         self,
         mock_session: Session,
