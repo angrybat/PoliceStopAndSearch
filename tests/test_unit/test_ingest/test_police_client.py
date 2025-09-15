@@ -140,6 +140,32 @@ class TestGetAvailableDates:
         mock_get.assert_called_once_with("crimes-street-dates")
 
     @pytest.mark.asyncio
+    async def test_filters_forces_by_force_ids(self):
+        police_client = PoliceClient()
+        returned_available_dates = [
+            {"date": "2022-07", "stop-and-search": ["force-one", "force-two"]},
+            {"date": "2023-07", "stop-and-search": ["force-one", "force-two"]},
+        ]
+        mock_response = Mock()
+        mock_response.json.return_value = returned_available_dates
+        mock_get = AsyncMock(return_value=mock_response)
+        police_client.rate_limited_get = mock_get
+
+        available_dates = await police_client.get_available_dates(
+            datetime(2022, 6, 1), datetime(2023, 8, 1), ["force-one"]
+        )
+
+        assert available_dates == [
+            AvailableDateWithForceIds(
+                **{"date": "2022-07", "stop-and-search": ["force-one"]}
+            ),
+            AvailableDateWithForceIds(
+                **{"date": "2023-07", "stop-and-search": ["force-one"]},
+            ),
+        ]
+        mock_get.assert_called_once_with("crimes-street-dates")
+
+    @pytest.mark.asyncio
     async def test_logs_error_on_request_failure(self, caplog: LogCaptureFixture):
         police_client = PoliceClient()
         mock_response = Mock()

@@ -49,20 +49,24 @@ class PoliceClient(AsyncClient):
         ]
 
     async def get_available_dates(
-        self, from_date: datetime, to_date: datetime
+        self, from_date: datetime, to_date: datetime, force_ids: list[str] | None = None
     ) -> list[AvailableDateWithForceIds]:
         available_dates = await self._get_response_body(
             "crimes-street-dates", "Failed to fetch available dates from Police API"
         )
         from_year_month = from_date.strftime("%Y-%m")
         to_year_month = to_date.strftime("%Y-%m")
-        return [
+        filtered_available_dates = [
             date
             for date in self._map_vailidate_models(
                 AvailableDateWithForceIds, available_dates
             )
             if from_year_month <= date.year_month and date.year_month <= to_year_month
         ]
+        if force_ids:
+            for date in filtered_available_dates:
+                date.force_ids = [id for id in force_ids if id in force_ids]
+        return filtered_available_dates
 
     async def get_stop_and_searches(
         self, date: str, force_id: str, with_location: bool

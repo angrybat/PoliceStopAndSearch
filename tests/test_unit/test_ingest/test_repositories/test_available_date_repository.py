@@ -139,6 +139,9 @@ class TestStoreAvailableDates:
 
         assert success is True
         mock_force_repository.store_forces.assert_called_once_with(["force-1"])
+        mock_police_client.get_available_dates.assert_called_once_with(
+            from_date, to_date, ["force-1"]
+        )
 
     @pytest.mark.asyncio
     async def test_stores_forces_not_returned_from_force_repository(
