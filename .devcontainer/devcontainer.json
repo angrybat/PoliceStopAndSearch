@@ -21,7 +21,8 @@
 		"vscode": {
 			"extensions": [
 				"cweijan.vscode-postgresql-client2",
-				"ms-python.mypy-type-checker"
+				"ms-python.mypy-type-checker",
+				"bierner.markdown-mermaid"
 			]
 		}
 	},
