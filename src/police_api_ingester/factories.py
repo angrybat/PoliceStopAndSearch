@@ -16,7 +16,6 @@ def get_logger(log_file_path: str, log_level: int):
     logger.setLevel(log_level)
     for handler in logger.handlers:
         handler.setLevel(log_level)
-    logger.info("test")
     return logger
 
 
