@@ -6,6 +6,7 @@ from typer import Typer
 
 from police_api_ingester.commands.options import (
     DATABASE_URL,
+    FORCE_IDS,
     FROM_DATE,
     INGEST_AVAILABLE_DATES,
     LOG_LEVEL,
@@ -36,6 +37,7 @@ ingest = Typer()
 )
 def ingest_forces(
     database_url: Annotated[str, DATABASE_URL],
+    force_ids: str | None = FORCE_IDS,
     police_client_base_url: str = POLICE_CLIENT_BASE_URL,
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -53,7 +55,8 @@ def ingest_forces(
         police_client_max_request_retries,
         police_client_timeout,
     )
-    run(force_repository.store_forces())
+    force_ids_list = force_ids.split(",") if force_ids else None
+    run(force_repository.store_forces(force_ids_list))
 
 
 @ingest.command(
@@ -61,9 +64,10 @@ def ingest_forces(
     help="Ingests the dates that have available stop and searches into the bronze database using the Police API. This will ingest the forces first.",
 )
 def ingest_available_dates(
+    database_url: Annotated[str, DATABASE_URL],
     from_datetime: Annotated[datetime, FROM_DATE],
     to_datetime: Annotated[datetime, TO_DATE],
-    database_url: Annotated[str, DATABASE_URL],
+    force_ids: str | None = FORCE_IDS,
     police_client_base_url: str = POLICE_CLIENT_BASE_URL,
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -81,7 +85,12 @@ def ingest_available_dates(
         police_client_max_request_retries,
         police_client_timeout,
     )
-    run(available_date_repository.store_available_dates(from_datetime, to_datetime))
+    force_ids_list = force_ids.split(",") if force_ids else None
+    run(
+        available_date_repository.store_available_dates(
+            from_datetime, to_datetime, force_ids_list
+        )
+    )
 
 
 @ingest.command(
@@ -89,9 +98,10 @@ def ingest_available_dates(
     help="Ingests the stop and searches into the bronze database using the Police API. By default this will ingest the available dates and forces into the database.",
 )
 def ingest_stop_and_searches(
+    database_url: Annotated[str, DATABASE_URL],
     from_datetime: Annotated[datetime, FROM_DATE],
     to_datetime: Annotated[datetime, TO_DATE],
-    database_url: Annotated[str, DATABASE_URL],
+    force_ids: str | None = FORCE_IDS,
     police_client_base_url: str = POLICE_CLIENT_BASE_URL,
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -110,8 +120,12 @@ def ingest_stop_and_searches(
         police_client_max_request_retries,
         police_client_timeout,
     )
+    force_ids_list = force_ids.split(",") if force_ids is not None else None
     run(
         stop_and_search_repository.store_stop_and_searches(
-            from_datetime, to_datetime, store_available_dates=ingest_available_dates
+            from_datetime,
+            to_datetime,
+            store_available_dates=ingest_available_dates,
+            force_ids=force_ids_list,
         )
     )

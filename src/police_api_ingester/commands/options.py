@@ -73,3 +73,9 @@ LOG_LEVEL: int = Option(
     parser=parse_log_level,
     metavar="[notset,debug,info,warning,error,critical]",
 )
+FORCE_IDS: str | None = Option(
+    None,
+    "--force-ids",
+    help="A comma seperated list of force id's that will filter that forces will be ingested. The ids for a force can be seen here: https://data.police.uk/api/forces",
+    envvar="FORCE_IDS",
+)

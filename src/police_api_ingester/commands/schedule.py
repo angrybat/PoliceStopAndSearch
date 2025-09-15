@@ -12,6 +12,7 @@ from police_api_ingester.commands.ingest import (
 from police_api_ingester.commands.options import (
     CRON,
     DATABASE_URL,
+    FORCE_IDS,
     FROM_DATE,
     INGEST_AVAILABLE_DATES,
     LOG_LEVEL,
@@ -50,6 +51,7 @@ def schedule_function(cron: Cron, func: Callable, **kwargs) -> None:
 def schedule_ingest_forces(
     cron: Annotated[Cron, CRON],
     database_url: Annotated[str, DATABASE_URL],
+    force_ids: str | None = FORCE_IDS,
     police_client_base_url: str = POLICE_CLIENT_BASE_URL,
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -67,6 +69,7 @@ def schedule_ingest_forces(
         police_client_timeout=police_client_timeout,
         log_level=log_level,
         logging_conf_file_path=logging_conf_file_path,
+        force_ids=force_ids,
     )
 
 
@@ -76,9 +79,10 @@ def schedule_ingest_forces(
 )
 def schedule_ingest_available_dates(
     cron: Annotated[Cron, CRON],
+    database_url: Annotated[str, DATABASE_URL],
     from_datetime: Annotated[datetime, FROM_DATE],
     to_datetime: Annotated[datetime, TO_DATE],
-    database_url: Annotated[str, DATABASE_URL],
+    force_ids: str | None = FORCE_IDS,
     police_client_base_url: str = POLICE_CLIENT_BASE_URL,
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -98,6 +102,7 @@ def schedule_ingest_available_dates(
         police_client_timeout=police_client_timeout,
         log_level=log_level,
         logging_conf_file_path=logging_conf_file_path,
+        force_ids=force_ids,
     )
 
 
@@ -105,11 +110,12 @@ def schedule_ingest_available_dates(
     "stop-and-searches",
     help="Schedules the ingest of the stop and searches into the bronze database using the Police API. By default this will ingest the available dates and forces into the database.",
 )
-def schedule_stop_and_searches_available_dates(
+def schedule_ingest_stop_and_searches(
     cron: Annotated[Cron, CRON],
+    database_url: Annotated[str, DATABASE_URL],
     from_datetime: Annotated[datetime, FROM_DATE],
     to_datetime: Annotated[datetime, TO_DATE],
-    database_url: Annotated[str, DATABASE_URL],
+    force_ids: str | None = FORCE_IDS,
     police_client_base_url: str = POLICE_CLIENT_BASE_URL,
     police_client_max_requests_per_seconds: int = POLICE_CLIENT_MAX_REQUESTS_PER_SECONDS,
     police_client_max_request_retries: int = POLICE_CLIENT_MAX_REQUEST_RETRIES,
@@ -131,4 +137,5 @@ def schedule_stop_and_searches_available_dates(
         police_client_timeout=police_client_timeout,
         log_level=log_level,
         logging_conf_file_path=logging_conf_file_path,
+        force_ids=force_ids,
     )
