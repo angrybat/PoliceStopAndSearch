@@ -36,10 +36,12 @@ class PoliceClient(AsyncClient):
         self.max_request_retries = max_request_retries
         super().__init__(base_url=base_url, timeout=timeout)
 
-    async def get_forces(self, force_ids: list[str] = []) -> list[Force]:
+    async def get_forces(self, force_ids: list[str] | None = None) -> list[Force]:
         forces = await self._get_response_body(
             "forces", "Failed to fetch forces from Police API"
         )
+        if force_ids is None:
+            return self._map_vailidate_models(Force, forces)
         return [
             force
             for force in self._map_vailidate_models(Force, forces)
