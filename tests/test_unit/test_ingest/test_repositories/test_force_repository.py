@@ -34,9 +34,10 @@ class TestStoreForces:
         mock_police_client.get_forces.return_value = forces
         mock_session.exec.return_value.all.return_value = []
 
-        stored_forces = await force_repository.store_forces()
+        stored_forces = await force_repository.store_forces(["force-1"])
 
         assert stored_forces == forces
+        mock_police_client.get_forces.assert_called_once_with(["force-1"])
         mock_session.add_all.assert_called_once_with(forces)
         mock_session.commit.assert_called_once()
         mock_session.refresh.assert_has_calls(
