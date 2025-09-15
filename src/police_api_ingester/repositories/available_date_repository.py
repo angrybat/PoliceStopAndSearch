@@ -32,7 +32,7 @@ class AvailableDateRepository(Repository):
         try:
             forces, available_dates, existing_available_dates = await gather(
                 self.force_repository.store_forces(force_ids),
-                self.police_client.get_available_dates(from_date, to_date),
+                self.police_client.get_available_dates(from_date, to_date, force_ids),
                 self.get_available_dates(from_date, to_date, with_forces=True),
             )
         except HTTPStatusError:
