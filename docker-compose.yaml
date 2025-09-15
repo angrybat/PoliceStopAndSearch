@@ -1,0 +1,20 @@
+services:
+  database:
+    image: police_api_database:latest
+    container_name: police_api_database
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    
+  ingester:
+    image: police_api_ingester:latest
+    container_name: police_api_ingester
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@database/postgres
+      - LOG_LEVEL=info
+    depends_on:
+      - database
+    entrypoint: ["police-api-ingester", "schedule", stop-and-searches, "--cron-string", "* * * * *", "--from-datetime", "2022-01-01", "--to-datetime", "2030-01-01"]
+  
