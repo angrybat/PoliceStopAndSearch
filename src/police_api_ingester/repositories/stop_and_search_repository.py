@@ -26,10 +26,11 @@ class StopAndSearchRepository(Repository):
         from_datetime: datetime,
         to_datetime: datetime,
         store_available_dates: bool = False,
+        force_ids: list[str] | None = None,
     ) -> bool:
         if store_available_dates:
             success = await self.available_date_repository.store_available_dates(
-                from_datetime, to_datetime
+                from_datetime, to_datetime, force_ids
             )
             if not success:
                 return False

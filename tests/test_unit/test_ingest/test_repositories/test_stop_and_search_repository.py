@@ -96,6 +96,81 @@ class TestStoreStopAndSearches:
         )
 
     @pytest.mark.asyncio
+    async def test_calls_store_available_dates_with_correct_parameters(
+        self,
+        stop_and_search_repository: StopAndSearchRepository,
+    ):
+        available_dates = [
+            AvailableDate(
+                year_month="2023-01",
+                forces=[
+                    Force(id="force-one", name="Force One"),
+                    Force(id="force-two", name="Force Two"),
+                    Force(id="force-three", name="Force Three"),
+                ],
+            ),
+            AvailableDate(
+                year_month="2023-02",
+                forces=[
+                    Force(id="force-one", name="Force One"),
+                    Force(id="force-two", name="Force Two"),
+                    Force(id="force-three", name="Force Three"),
+                ],
+            ),
+        ]
+        mock_available_date_repository = AsyncMock()
+        stop_and_search_repository.available_date_repository = (
+            mock_available_date_repository
+        )
+        mock_get_available_dates = AsyncMock(return_value=available_dates)
+        mock_available_date_repository.get_available_dates = mock_get_available_dates
+        stop_and_search_repository.store_stop_and_search = AsyncMock()
+        stop_and_search_repository.store_stop_and_search.side_effect = [
+            True,
+            True,
+            True,
+            True,
+            True,
+            True,
+        ]
+        from_datetime = datetime(2023, 1, 1, 1, 0, 0)
+        to_datetime = datetime(2023, 2, 1, 3, 45, 0)
+
+        success = await stop_and_search_repository.store_stop_and_searches(
+            from_datetime, to_datetime, True, ["force-1"]
+        )
+
+        assert success is True
+        mock_available_date_repository.store_available_dates.assert_called_once_with(
+            from_datetime, to_datetime, ["force-1"]
+        )
+
+    @pytest.mark.asyncio
+    async def test_returns_false_if_available_dates_is_not_stored(
+        self,
+        stop_and_search_repository: StopAndSearchRepository,
+    ):
+        mock_available_date_repository = AsyncMock()
+        stop_and_search_repository.available_date_repository = (
+            mock_available_date_repository
+        )
+        mock_store_available_dates = AsyncMock(return_value=False)
+        mock_available_date_repository.store_available_dates = (
+            mock_store_available_dates
+        )
+        from_datetime = datetime(2023, 1, 1, 1, 0, 0)
+        to_datetime = datetime(2023, 2, 1, 3, 45, 0)
+
+        success = await stop_and_search_repository.store_stop_and_searches(
+            from_datetime, to_datetime, True, ["force-1"]
+        )
+
+        assert success is False
+        mock_available_date_repository.store_available_dates.assert_called_once_with(
+            from_datetime, to_datetime, ["force-1"]
+        )
+
+    @pytest.mark.asyncio
     async def test_returns_false_if_a_stop_and_search_calls_fails(
         self,
         stop_and_search_repository: StopAndSearchRepository,
